@@ -196,7 +196,11 @@ export default function Dashboard() {
   return (
     <div>
       <div className="topbar">
-        <strong style={{fontFamily:'var(--serif)'}}>TRADER EDGE</strong>
+        <div style={{display:'flex', alignItems:'center', gap:24}}>
+          <strong style={{fontFamily:'var(--serif)'}}>TRADER EDGE</strong>
+          <a href="/dashboard" style={{color:'var(--gold-bright)', fontSize:13.5}}>Dashboard</a>
+          <a href="/journal" style={{color:'var(--text-muted)', fontSize:13.5}}>Journal</a>
+        </div>
         <button className="del-btn" onClick={logOut}>Sign out</button>
       </div>
 
