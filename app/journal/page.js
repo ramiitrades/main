@@ -16,7 +16,12 @@ export default function Journal() {
   const [trades, setTrades] = useState([]);
   const [accounts, setAccounts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [savingId, setSavingId] = useState(null);
+
+  const [fGrade, setFGrade] = useState('All');
+  const [fSession, setFSession] = useState('All');
+  const [fResult, setFResult] = useState('All');
+  const [fPlan, setFPlan] = useState('All');
+  const [fMistake, setFMistake] = useState('All');
 
   useEffect(() => { init(); }, []);
 
@@ -38,25 +43,10 @@ export default function Journal() {
     setAccounts(data || []);
   }
 
-  function accountName(id) {
-    const a = accounts.find(x => x.id === id);
-    return a ? a.name : '—';
-  }
-
-  async function saveNote(id, notes) {
-    setSavingId(id);
-    await supabase.from('trades').update({ notes }).eq('id', id);
-    setSavingId(null);
-  }
-
   async function deleteTrade(id) {
-    if (!confirm('Delete this trade?')) return;
+    if (!confirm('Delete this journal entry?')) return;
     await supabase.from('trades').delete().eq('id', id);
     setTrades(trades.filter(t => t.id !== id));
-  }
-
-  function updateLocalNote(id, notes) {
-    setTrades(trades.map(t => t.id === id ? { ...t, notes } : t));
   }
 
   async function logOut() {
@@ -64,6 +54,23 @@ export default function Journal() {
     router.push('/login');
     router.refresh();
   }
+
+  const allMistakes = Array.from(new Set(trades.flatMap(t => t.mistakes || [])));
+
+  const filtered = trades.filter(t => {
+    if (fGrade !== 'All' && t.grade !== fGrade) return false;
+    if (fSession !== 'All' && t.session !== fSession) return false;
+    if (fResult !== 'All') {
+      if (fResult === 'Win' && !(t.pnl > 0)) return false;
+      if (fResult === 'Loss' && !(t.pnl < 0)) return false;
+    }
+    if (fPlan !== 'All') {
+      if (fPlan === 'Yes' && !t.followed_plan) return false;
+      if (fPlan === 'No' && t.followed_plan) return false;
+    }
+    if (fMistake !== 'All' && !(t.mistakes || []).includes(fMistake)) return false;
+    return true;
+  });
 
   if (loading) return <div className="content">Loading your journal…</div>;
 
@@ -74,60 +81,81 @@ export default function Journal() {
           <strong style={{fontFamily:'var(--serif)'}}>TRADER EDGE</strong>
           <a href="/dashboard" style={{color:'var(--text-muted)', fontSize:13.5}}>Dashboard</a>
           <a href="/journal" style={{color:'var(--gold-bright)', fontSize:13.5}}>Journal</a>
+          <a href="/log-trade" style={{color:'var(--text-muted)', fontSize:13.5}}>Log trade</a>
         </div>
         <button className="del-btn" onClick={logOut}>Sign out</button>
       </div>
 
       <div className="content">
-        <h1 style={{fontFamily:'var(--serif)', fontWeight:500, fontSize:28, marginBottom:4}}>Journal</h1>
-        <p style={{color:'var(--text-dim)', marginBottom:24}}>Every trade, with the notes you left yourself.</p>
-
-        <div className="panel" style={{padding:0, overflow:'hidden'}}>
-          <table>
-            <thead>
-              <tr>
-                <th style={{padding:'12px 20px'}}>Date</th>
-                <th style={{padding:'12px 20px'}}>Symbol</th>
-                <th style={{padding:'12px 20px'}}>Account</th>
-                <th style={{padding:'12px 20px', textAlign:'right'}}>Net P&amp;L</th>
-                <th style={{padding:'12px 20px'}}>Note</th>
-                <th style={{padding:'12px 20px'}}></th>
-              </tr>
-            </thead>
-            <tbody>
-              {trades.length === 0 && (
-                <tr><td colSpan={6} style={{textAlign:'center', color:'var(--text-dim)', padding:30}}>No trades logged yet.</td></tr>
-              )}
-              {trades.map(t => (
-                <tr key={t.id}>
-                  <td style={{padding:'12px 20px', fontFamily:'var(--mono)'}}>{t.trade_date}</td>
-                  <td style={{padding:'12px 20px'}}>{t.symbol}</td>
-                  <td style={{padding:'12px 20px'}}>{accountName(t.account_id)}</td>
-                  <td style={{padding:'12px 20px', textAlign:'right', fontFamily:'var(--mono)', fontWeight:600, color: t.pnl>=0?'var(--green)':'var(--red)'}}>
-                    {fmt(t.pnl)}
-                  </td>
-                  <td style={{padding:'12px 20px'}}>
-                    <input
-                      type="text"
-                      value={t.notes || ''}
-                      placeholder="Add a note…"
-                      onChange={e => updateLocalNote(t.id, e.target.value)}
-                      onBlur={e => saveNote(t.id, e.target.value)}
-                      style={{
-                        width:'100%', background:'var(--bg-alt)', border:'1px solid var(--border)',
-                        borderRadius:6, color:'var(--text)', padding:'7px 10px', fontSize:13
-                      }}
-                    />
-                    {savingId === t.id && <span style={{fontSize:11, color:'var(--text-dim)', marginLeft:8}}>saving…</span>}
-                  </td>
-                  <td style={{padding:'12px 20px', textAlign:'right'}}>
-                    <button className="del-btn" onClick={() => deleteTrade(t.id)} title="Delete trade">×</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-end', marginBottom:20, flexWrap:'wrap', gap:16}}>
+          <div>
+            <h1 style={{fontFamily:'var(--serif)', fontWeight:500, fontSize:28, marginBottom:4}}>Journal</h1>
+            <p style={{color:'var(--text-dim)'}}>{filtered.length}/{trades.length} shown</p>
+          </div>
+          <a href="/log-trade" className="add-btn" style={{textDecoration:'none', display:'inline-block'}}>+ Log trade</a>
         </div>
+
+        <div className="filter-row">
+          <span><label>Grade</label>
+            <select value={fGrade} onChange={e=>setFGrade(e.target.value)}>
+              <option>All</option><option>A+</option><option>A</option><option>B</option><option>C</option>
+            </select>
+          </span>
+          <span><label>Session</label>
+            <select value={fSession} onChange={e=>setFSession(e.target.value)}>
+              <option>All</option><option>Asia</option><option>London</option><option>NY AM</option><option>NY PM</option>
+            </select>
+          </span>
+          <span><label>Result</label>
+            <select value={fResult} onChange={e=>setFResult(e.target.value)}>
+              <option>All</option><option>Win</option><option>Loss</option>
+            </select>
+          </span>
+          <span><label>Plan</label>
+            <select value={fPlan} onChange={e=>setFPlan(e.target.value)}>
+              <option>All</option><option>Yes</option><option>No</option>
+            </select>
+          </span>
+          <span><label>Mistake</label>
+            <select value={fMistake} onChange={e=>setFMistake(e.target.value)}>
+              <option>All</option>
+              {allMistakes.map(m => <option key={m}>{m}</option>)}
+            </select>
+          </span>
+        </div>
+
+        {filtered.length === 0 && (
+          <div className="empty-state" style={{background:'var(--card)', border:'1px dashed var(--border)', borderRadius:10, padding:40, textAlign:'center', color:'var(--text-muted)'}}>
+            No entries match these filters.
+          </div>
+        )}
+
+        {filtered.map(t => {
+          const accName = accounts.find(a => a.id === t.account_id)?.name;
+          return (
+            <div key={t.id} className={`entry-card ${t.pnl < 0 ? 'loss' : ''}`}>
+              <div className="entry-head">
+                <span className="entry-pnl" style={{color: t.pnl >= 0 ? 'var(--green)' : 'var(--red)'}}>{fmt(t.pnl)}</span>
+                <span className="entry-meta">{t.trade_date}</span>
+                <span className="entry-meta">{t.symbol}</span>
+                {t.direction && <span className={`badge-chip ${t.direction==='Long'?'long':'short'}`}>{t.direction.toUpperCase()}</span>}
+                {t.session && <span className="badge-chip">{t.session}</span>}
+                {t.grade && <span className="badge-chip grade">{t.grade}</span>}
+                {t.setup && <span className="entry-meta">{t.setup}</span>}
+                {accName && <span className="entry-meta" style={{marginLeft:'auto'}}>{accName}</span>}
+                <button className="del-btn" onClick={()=>router.push('/log-trade?id='+t.id)} style={{border:'1px solid var(--border)', borderRadius:6, padding:'4px 10px', fontSize:12}}>Edit</button>
+                <button className="del-btn" onClick={()=>deleteTrade(t.id)} title="Delete">×</button>
+              </div>
+              {(t.mistakes||[]).length > 0 && (
+                <div style={{marginBottom:6}}>
+                  {t.mistakes.map(m => <span key={m} className="mistake-tag">{m}</span>)}
+                </div>
+              )}
+              {t.why_text && <div className="entry-why"><b>WHY</b>{t.why_text}</div>}
+              {t.review_text && <div className="entry-why"><b>REVIEW</b>{t.review_text}</div>}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
