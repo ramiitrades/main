@@ -77,7 +77,7 @@ export default function Certificates() {
       <div className="content">
         <h1 style={{fontFamily:'var(--serif)', fontWeight:500, fontSize:28, marginBottom:20}}>Trophy wall</h1>
 
-        <div className="stat-row" style={{gridTemplateColumns:'repeat(3,1fr)'}}>
+        <div className="stat-row responsive-grid" style={{gridTemplateColumns:'repeat(3,1fr)'}}>
           <div className="stat-card"><div className="stat-label">Evals passed</div><div className="stat-val">{evalsPassed}</div></div>
           <div className="stat-card"><div className="stat-label">Total payouts</div><div className="stat-val green">{fmt(totalPayouts)}</div></div>
           <div className="stat-card"><div className="stat-label">Entries</div><div className="stat-val">{certs.length}</div></div>
@@ -94,7 +94,7 @@ export default function Certificates() {
             </div>
           </div>
 
-          <div style={{display:'grid', gridTemplateColumns: form.type==='payout' ? '1.5fr 1fr 1fr' : '1.5fr 1fr', gap:18, marginBottom:20}}>
+          <div className="responsive-grid" style={{display:'grid', gridTemplateColumns: form.type==='payout' ? '1.5fr 1fr 1fr' : '1.5fr 1fr', gap:18, marginBottom:20}}>
             <div className="form-field"><label>Firm</label><input type="text" placeholder="e.g. Apex, FTMO" value={form.firm} onChange={e=>setForm({...form, firm:e.target.value})} /></div>
             {form.type === 'payout' && (
               <div className="form-field"><label>Payout amount ($)</label><input type="number" placeholder="3150" value={form.amount} onChange={e=>setForm({...form, amount:e.target.value})} /></div>
