@@ -79,7 +79,9 @@ function LogTradeForm() {
     if (newPhotos.length > 0) {
       setUploading(true);
       for (const file of newPhotos) {
-        const path = `${user.id}/${Date.now()}-${file.name}`;
+        const ext = (file.name.split('.').pop() || 'png').toLowerCase().replace(/[^a-z0-9]/g, '');
+        const safeName = `${Date.now()}-${Math.random().toString(36).slice(2,8)}.${ext || 'png'}`;
+        const path = `${user.id}/${safeName}`;
         const { error: upErr } = await supabase.storage.from('trade-photos').upload(path, file);
         if (upErr) { alert('Photo upload failed: ' + upErr.message); setSaving(false); setUploading(false); return; }
         const { data: pub } = supabase.storage.from('trade-photos').getPublicUrl(path);
