@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '../../lib/supabaseClient';
 
 const SESSIONS = ['Asia', 'London', 'NY AM', 'NY PM'];
-const GRADES = ['A+', 'A', 'B', 'C'];
+const GRADES = ['A+', 'A', 'B', 'C', 'D', 'F'];
 const MISTAKES = ['FOMO entry', 'Moved stop', 'Early exit', 'Late entry', 'Revenge trade', 'Oversized', 'Chased', 'Hesitated', 'No mistake'];
 
 function LogTradeForm() {
@@ -19,10 +19,13 @@ function LogTradeForm() {
 
   const [form, setForm] = useState({
     date: new Date().toISOString().slice(0,10),
-    symbol: '', pnl: '', r_multiple: '', mae: '', mfe: '',
+    symbol: '', pnl: '', r_multiple: '',
     account_id: '', session: 'NY AM', direction: 'Long', grade: 'A',
     setup: '', followed_plan: true, mistakes: [], why_text: '', review_text: '',
   });
+  const [existingPhotos, setExistingPhotos] = useState([]);
+  const [newPhotos, setNewPhotos] = useState([]);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => { init(); }, []);
 
@@ -39,12 +42,13 @@ function LogTradeForm() {
       if (trade) {
         setForm({
           date: trade.trade_date, symbol: trade.symbol, pnl: trade.pnl,
-          r_multiple: trade.r_multiple ?? '', mae: trade.mae ?? '', mfe: trade.mfe ?? '',
+          r_multiple: trade.r_multiple ?? '',
           account_id: trade.account_id || '', session: trade.session || 'NY AM',
           direction: trade.direction || 'Long', grade: trade.grade || 'A',
           setup: trade.setup || '', followed_plan: trade.followed_plan ?? true,
           mistakes: trade.mistakes || [], why_text: trade.why_text || '', review_text: trade.review_text || '',
         });
+        setExistingPhotos(trade.photo_urls || []);
       }
     }
   }
@@ -58,10 +62,31 @@ function LogTradeForm() {
     });
   }
 
+  function addPhotos(fileList) {
+    const total = existingPhotos.length + newPhotos.length + fileList.length;
+    if (total > 3) { alert('Up to 3 photos per trade.'); return; }
+    setNewPhotos(prev => [...prev, ...Array.from(fileList)]);
+  }
+  function removeNewPhoto(i) { setNewPhotos(prev => prev.filter((_, idx) => idx !== i)); }
+  function removeExistingPhoto(i) { setExistingPhotos(prev => prev.filter((_, idx) => idx !== i)); }
+
   async function save(noTradeDay = false) {
     const pnl = noTradeDay ? 0 : parseFloat(form.pnl);
     if (!noTradeDay && (!form.symbol || isNaN(pnl))) { alert('Enter at least a symbol and a numeric P&L.'); return; }
     setSaving(true);
+
+    let uploadedUrls = [];
+    if (newPhotos.length > 0) {
+      setUploading(true);
+      for (const file of newPhotos) {
+        const path = `${user.id}/${Date.now()}-${file.name}`;
+        const { error: upErr } = await supabase.storage.from('trade-photos').upload(path, file);
+        if (upErr) { alert('Photo upload failed: ' + upErr.message); setSaving(false); setUploading(false); return; }
+        const { data: pub } = supabase.storage.from('trade-photos').getPublicUrl(path);
+        uploadedUrls.push(pub.publicUrl);
+      }
+      setUploading(false);
+    }
 
     const payload = {
       user_id: user.id,
@@ -73,9 +98,8 @@ function LogTradeForm() {
       setup: form.setup, followed_plan: form.followed_plan, mistakes: form.mistakes,
       why_text: form.why_text, review_text: form.review_text,
       r_multiple: form.r_multiple === '' ? null : parseFloat(form.r_multiple),
-      mae: form.mae === '' ? null : parseFloat(form.mae),
-      mfe: form.mfe === '' ? null : parseFloat(form.mfe),
       no_trade_day: noTradeDay,
+      photo_urls: [...existingPhotos, ...uploadedUrls],
     };
 
     let error;
@@ -118,9 +142,7 @@ function LogTradeForm() {
             </div>
           </div>
 
-          <div className="form-grid">
-            <div className="form-field"><label>MAE $ — worst it went against you</label><input type="number" placeholder="e.g. 80" value={form.mae} onChange={e=>setForm({...form, mae:e.target.value})} /></div>
-            <div className="form-field"><label>MFE $ — best it went for you</label><input type="number" placeholder="e.g. 340" value={form.mfe} onChange={e=>setForm({...form, mfe:e.target.value})} /></div>
+          <div className="form-grid" style={{gridTemplateColumns:'1fr'}}>
             <div className="form-field"><label>Setup</label><input type="text" placeholder="e.g. BNR, ORB, VWAP reclaim" value={form.setup} onChange={e=>setForm({...form, setup:e.target.value})} /></div>
           </div>
 
@@ -177,8 +199,36 @@ function LogTradeForm() {
             <textarea value={form.review_text} onChange={e=>setForm({...form, review_text:e.target.value})} placeholder="Management, mistakes, what to repeat..." />
           </div>
 
+          <div style={{marginBottom:24}}>
+            <label style={{display:'block', fontSize:12.5, color:'var(--text-muted)', marginBottom:8}}>
+              Trade screenshots — up to 3
+            </label>
+            <div style={{display:'flex', gap:10, flexWrap:'wrap'}}>
+              {existingPhotos.map((url, i) => (
+                <div key={'e'+i} style={{position:'relative', width:100, height:100}}>
+                  <img src={url} alt="" style={{width:'100%', height:'100%', objectFit:'cover', borderRadius:8, border:'1px solid var(--border)'}} />
+                  <button type="button" onClick={()=>removeExistingPhoto(i)} style={{position:'absolute', top:-6, right:-6, background:'var(--red)', color:'#fff', border:'none', borderRadius:'50%', width:20, height:20, fontSize:12, cursor:'pointer'}}>×</button>
+                </div>
+              ))}
+              {newPhotos.map((file, i) => (
+                <div key={'n'+i} style={{position:'relative', width:100, height:100}}>
+                  <img src={URL.createObjectURL(file)} alt="" style={{width:'100%', height:'100%', objectFit:'cover', borderRadius:8, border:'1px solid var(--border)'}} />
+                  <button type="button" onClick={()=>removeNewPhoto(i)} style={{position:'absolute', top:-6, right:-6, background:'var(--red)', color:'#fff', border:'none', borderRadius:'50%', width:20, height:20, fontSize:12, cursor:'pointer'}}>×</button>
+                </div>
+              ))}
+              {(existingPhotos.length + newPhotos.length) < 3 && (
+                <label style={{width:100, height:100, border:'1px dashed var(--border)', borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', color:'var(--text-dim)', fontSize:24}}>
+                  +
+                  <input type="file" accept="image/*" multiple style={{display:'none'}} onChange={e=>addPhotos(e.target.files)} />
+                </label>
+              )}
+            </div>
+          </div>
+
           <div style={{display:'flex', gap:12, alignItems:'center'}}>
-            <button className="add-btn" disabled={saving} onClick={()=>save(false)}>{saving ? 'Saving…' : (editId ? 'Update trade' : 'Save trade')}</button>
+            <button className="add-btn" disabled={saving} onClick={()=>save(false)}>
+              {uploading ? 'Uploading photos…' : saving ? 'Saving…' : (editId ? 'Update trade' : 'Save trade')}
+            </button>
             {!editId && (
               <button type="button" className="del-btn" style={{border:'1px solid var(--border)', borderRadius:7, padding:'10px 16px'}} onClick={()=>save(true)}>
                 Mark as no-trade day
