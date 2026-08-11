@@ -123,6 +123,7 @@ function LogTradeForm() {
           <a href="/dashboard" style={{color:'var(--text-muted)', fontSize:13.5}}>Dashboard</a>
           <a href="/journal" style={{color:'var(--text-muted)', fontSize:13.5}}>Journal</a>
           <a href="/log-trade" style={{color:'var(--gold-bright)', fontSize:13.5}}>Log trade</a>
+          <a href="/certificates" style={{color:'var(--text-muted)', fontSize:13.5}}>Certificates</a>
           <a href="/expenses" style={{color:'var(--text-muted)', fontSize:13.5}}>Expenses</a>
         </div>
       </div>
