@@ -2,6 +2,7 @@
 import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '../../lib/supabaseClient';
+import Sidebar from '../../components/Sidebar';
 
 const SESSIONS = ['Asia', 'London', 'NY AM', 'NY PM'];
 const GRADES = ['A+', 'A', 'B', 'C', 'D', 'F'];
@@ -116,18 +117,9 @@ function LogTradeForm() {
   }
 
   return (
-    <div>
-      <div className="topbar">
-        <div style={{display:'flex', alignItems:'center', gap:24}}>
-          <strong style={{fontFamily:'var(--serif)'}}>TRADER EDGE</strong>
-          <a href="/dashboard" style={{color:'var(--text-muted)', fontSize:13.5}}>Dashboard</a>
-          <a href="/journal" style={{color:'var(--text-muted)', fontSize:13.5}}>Journal</a>
-          <a href="/log-trade" style={{color:'var(--gold-bright)', fontSize:13.5}}>Log trade</a>
-          <a href="/certificates" style={{color:'var(--text-muted)', fontSize:13.5}}>Certificates</a>
-          <a href="/expenses" style={{color:'var(--text-muted)', fontSize:13.5}}>Expenses</a>
-        </div>
-      </div>
-
+    <div className="app-shell">
+      <Sidebar />
+      <div className="app-main">
       <div className="content">
         <h1 style={{fontFamily:'var(--serif)', fontWeight:500, fontSize:28, marginBottom:20}}>
           {editId ? 'Edit trade' : 'Log a trade'}
@@ -240,6 +232,7 @@ function LogTradeForm() {
             )}
           </div>
         </div>
+      </div>
       </div>
     </div>
   );
