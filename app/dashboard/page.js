@@ -216,7 +216,13 @@ export default function Dashboard() {
           const wins = dayTrades.filter(t=>t.pnl>0).length;
           const winPct = Math.round(wins/dayTrades.length*100);
           cls += total >= 0 ? ' win' : ' loss';
-          body = <div className="cal-meta">{dayTrades.length} trade{dayTrades.length===1?'':'s'} · {winPct}%</div>;
+          const pnlText = (total >= 0 ? '+' : '') + fmt(total);
+          body = (
+            <>
+              <div className="cal-pnl-mini" style={{color: total>=0?'var(--green)':'var(--red)'}}>{pnlText}</div>
+              <div className="cal-meta">{dayTrades.length} trade{dayTrades.length===1?'':'s'} · {winPct}%</div>
+            </>
+          );
         }
         cells.push(
           <div key={rowIdx+'-'+colIdx} className={cls}>
