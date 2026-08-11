@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '../../lib/supabaseClient';
+import Sidebar from '../../components/Sidebar';
 
 function fmt(n) {
   const sign = n < 0 ? '-' : '';
@@ -70,19 +71,9 @@ export default function Certificates() {
   const totalPayouts = certs.filter(c => c.type === 'payout').reduce((s, c) => s + Number(c.amount || 0), 0);
 
   return (
-    <div>
-      <div className="topbar">
-        <div style={{display:'flex', alignItems:'center', gap:24}}>
-          <strong style={{fontFamily:'var(--serif)'}}>TRADER EDGE</strong>
-          <a href="/dashboard" style={{color:'var(--text-muted)', fontSize:13.5}}>Dashboard</a>
-          <a href="/journal" style={{color:'var(--text-muted)', fontSize:13.5}}>Journal</a>
-          <a href="/log-trade" style={{color:'var(--text-muted)', fontSize:13.5}}>Log trade</a>
-          <a href="/certificates" style={{color:'var(--gold-bright)', fontSize:13.5}}>Certificates</a>
-          <a href="/expenses" style={{color:'var(--text-muted)', fontSize:13.5}}>Expenses</a>
-        </div>
-        <button className="del-btn" onClick={logOut}>Sign out</button>
-      </div>
-
+    <div className="app-shell">
+      <Sidebar />
+      <div className="app-main">
       <div className="content">
         <h1 style={{fontFamily:'var(--serif)', fontWeight:500, fontSize:28, marginBottom:20}}>Trophy wall</h1>
 
@@ -132,6 +123,7 @@ export default function Certificates() {
             ))}
           </div>
         )}
+      </div>
       </div>
     </div>
   );
