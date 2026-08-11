@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '../../lib/supabaseClient';
+import Sidebar from '../../components/Sidebar';
 
 function fmt(n) {
   const sign = n < 0 ? '-' : '';
@@ -75,19 +76,9 @@ export default function Journal() {
   if (loading) return <div className="content">Loading your journal…</div>;
 
   return (
-    <div>
-      <div className="topbar">
-        <div style={{display:'flex', alignItems:'center', gap:24}}>
-          <strong style={{fontFamily:'var(--serif)'}}>TRADER EDGE</strong>
-          <a href="/dashboard" style={{color:'var(--text-muted)', fontSize:13.5}}>Dashboard</a>
-          <a href="/journal" style={{color:'var(--gold-bright)', fontSize:13.5}}>Journal</a>
-          <a href="/log-trade" style={{color:'var(--text-muted)', fontSize:13.5}}>Log trade</a>
-          <a href="/certificates" style={{color:'var(--text-muted)', fontSize:13.5}}>Certificates</a>
-          <a href="/expenses" style={{color:'var(--text-muted)', fontSize:13.5}}>Expenses</a>
-        </div>
-        <button className="del-btn" onClick={logOut}>Sign out</button>
-      </div>
-
+    <div className="app-shell">
+      <Sidebar />
+      <div className="app-main">
       <div className="content">
         <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-end', marginBottom:20, flexWrap:'wrap', gap:16}}>
           <div>
@@ -167,6 +158,7 @@ export default function Journal() {
             </div>
           );
         })}
+      </div>
       </div>
     </div>
   );
