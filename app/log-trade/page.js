@@ -142,7 +142,7 @@ function LogTradeForm() {
             <div className="form-field"><label>Setup</label><input type="text" placeholder="e.g. BNR, ORB, VWAP reclaim" value={form.setup} onChange={e=>setForm({...form, setup:e.target.value})} /></div>
           </div>
 
-          <div style={{display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:24, marginBottom:20}}>
+          <div className="responsive-grid" style={{display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:24, marginBottom:20}}>
             <div>
               <label style={{display:'block', fontSize:12.5, color:'var(--text-muted)', marginBottom:8}}>Session</label>
               <div className="toggle-row">
