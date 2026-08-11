@@ -52,7 +52,7 @@ export default function Sidebar() {
       <nav className="sidebar-nav">
         {NAV.map(item => (
           <a key={item.href} href={item.href} className={`sidebar-link ${pathname === item.href ? 'active' : ''}`} title={collapsed ? item.label : undefined}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">{item.icon}</svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">{item.icon}</svg>
             {!collapsed && <span>{item.label}</span>}
           </a>
         ))}
@@ -60,7 +60,7 @@ export default function Sidebar() {
 
       <div className="sidebar-foot">
         <button className="sidebar-link sidebar-signout" onClick={logOut} title={collapsed ? 'Sign out' : undefined}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/>
           </svg>
           {!collapsed && <span>Sign out</span>}
