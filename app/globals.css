@@ -107,6 +107,7 @@ canvas{max-height:220px;}
 .cal-cell.loss{background:rgba(242,85,90,.1); border:1px solid rgba(242,85,90,.22);}
 .cal-cell.empty{background:transparent;}
 .cal-daynum{font-family:var(--mono); font-size:11px; color:var(--text-dim); align-self:flex-end;}
+.cal-pnl-mini{font-family:var(--mono); font-weight:700; font-size:11px; margin-top:2px;}
 .cal-meta{font-size:10px; color:var(--text-muted); font-family:var(--mono); line-height:1.3;}
 .cal-cell.win .cal-meta{color:var(--green);}
 .cal-cell.loss .cal-meta{color:var(--red);}
@@ -131,9 +132,12 @@ canvas{max-height:220px;}
   .stat-val{font-size:18px !important;}
 
   .cal-grid{gap:3px;}
-  .cal-cell{padding:4px;}
-  .cal-daynum{font-size:9px;}
-  .cal-meta{font-size:8px;}
+  .cal-panel{overflow-x:hidden;}
+  .cal-cell{aspect-ratio:unset; min-height:42px; padding:3px;}
+  .cal-daynum{font-size:7.5px;}
+  .cal-pnl-mini{font-size:8px !important; margin-top:1px;}
+  .cal-meta{font-size:6.5px; line-height:1.15;}
+  .cal-week-total{position:static !important; display:block; text-align:right; font-size:6.5px; margin-top:auto;}
 
   table{display:block; overflow-x:auto; white-space:nowrap; -webkit-overflow-scrolling:touch;}
   th, td{padding:9px 12px !important;}
