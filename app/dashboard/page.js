@@ -135,7 +135,7 @@ export default function Dashboard() {
 
   // ---- Charts ----
   useEffect(() => {
-    if (!stats) return;
+    if (loading || !stats) return;
     if (radarChart.current) radarChart.current.destroy();
     if (lineChart.current) lineChart.current.destroy();
     if (barChart.current) barChart.current.destroy();
@@ -162,7 +162,7 @@ export default function Dashboard() {
       data: { labels: stats.dayKeys.map(k => k.slice(5)), datasets: [{ data: stats.dayTotals, backgroundColor: (c) => c.raw < 0 ? '#f2555a' : '#3ecf8e', borderRadius: 3 }] },
       options: { plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { grid: { color: '#1b212a' } } } }
     });
-  }, [stats]);
+  }, [stats, loading]);
 
   function shiftMonth(dir) {
     const d = new Date(calDate); d.setMonth(d.getMonth() + dir); setCalDate(d);
