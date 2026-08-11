@@ -281,7 +281,7 @@ export default function Dashboard() {
 
         <div className="panel">
           <h3 style={{marginBottom:14, fontFamily:'var(--serif)'}}>Log a trade</h3>
-          <form onSubmit={addTrade} style={{display:'grid', gridTemplateColumns:'repeat(5,1fr) auto', gap:10, alignItems:'end'}}>
+          <form onSubmit={addTrade} className="responsive-grid" style={{display:'grid', gridTemplateColumns:'repeat(5,1fr) auto', gap:10, alignItems:'end'}}>
             <div className="field" style={{margin:0}}><label>Date</label><input type="date" value={form.date} onChange={e=>setForm({...form, date:e.target.value})} /></div>
             <div className="field" style={{margin:0}}><label>Symbol</label><input type="text" placeholder="MGC" value={form.symbol} onChange={e=>setForm({...form, symbol:e.target.value})} /></div>
             <div className="field" style={{margin:0}}><label>Account</label>
@@ -295,7 +295,7 @@ export default function Dashboard() {
           </form>
         </div>
 
-        <div style={{display:'grid', gridTemplateColumns:'1.4fr 1fr', gap:14}}>
+        <div className="responsive-grid" style={{display:'grid', gridTemplateColumns:'1.4fr 1fr', gap:14}}>
           <div className="panel">
             <h3 style={{marginBottom:14, fontFamily:'var(--serif)'}}>Recent trades</h3>
             <table>
