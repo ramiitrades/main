@@ -135,7 +135,7 @@ canvas{max-height:220px;}
   .cal-panel{overflow-x:hidden;}
   .cal-cell{aspect-ratio:unset; min-height:42px; padding:3px;}
   .cal-daynum{font-size:7.5px;}
-  .cal-pnl-mini{font-size:8px !important; margin-top:1px;}
+  .cal-pnl-mini{font-size:7.5px; margin-top:1px;}
   .cal-meta{font-size:6.5px; line-height:1.15;}
   .cal-week-total{position:static !important; display:block; text-align:right; font-size:6.5px; margin-top:auto;}
 
