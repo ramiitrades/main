@@ -188,9 +188,22 @@ export default function Dashboard() {
     const cells = [];
 
     rows.forEach((row, rowIdx) => {
+      let weekTotal = 0, weekHasData = false;
+      row.forEach(cellData => {
+        if (cellData && byDay[cellData.key]) {
+          weekTotal += byDay[cellData.key].reduce((s,t)=>s+Number(t.pnl),0);
+          weekHasData = true;
+        }
+      });
+
       row.forEach((cellData, colIdx) => {
+        const isSat = colIdx === 6;
+        const weekBadge = isSat && weekHasData ? (
+          <div className="cal-week-total" style={{color: weekTotal>=0?'var(--green-bright)':'var(--red)'}}>Wk {fmt(weekTotal)}</div>
+        ) : null;
+
         if (!cellData) {
-          cells.push(<div key={rowIdx+'-'+colIdx} className="cal-cell empty"></div>);
+          cells.push(<div key={rowIdx+'-'+colIdx} className="cal-cell empty">{weekBadge}</div>);
           return;
         }
         const dayTrades = byDay[cellData.key];
@@ -208,6 +221,7 @@ export default function Dashboard() {
           <div key={rowIdx+'-'+colIdx} className={cls}>
             <span className="cal-daynum">{cellData.day}</span>
             {body}
+            {weekBadge}
           </div>
         );
       });
