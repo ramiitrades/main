@@ -188,24 +188,9 @@ export default function Dashboard() {
     const cells = [];
 
     rows.forEach((row, rowIdx) => {
-      let weekTotal = 0, weekHasData = false;
-      row.forEach(cellData => {
-        if (cellData && byDay[cellData.key]) {
-          weekTotal += byDay[cellData.key].reduce((s,t)=>s+Number(t.pnl),0);
-          weekHasData = true;
-        }
-      });
-
       row.forEach((cellData, colIdx) => {
-        const isSat = colIdx === 6;
         if (!cellData) {
-          cells.push(
-            <div key={rowIdx+'-'+colIdx} className="cal-cell empty">
-              {isSat && weekHasData && (
-                <div className="cal-week-total" style={{color: weekTotal>=0?'var(--green)':'var(--red)'}}>Wk {fmt(weekTotal)}</div>
-              )}
-            </div>
-          );
+          cells.push(<div key={rowIdx+'-'+colIdx} className="cal-cell empty"></div>);
           return;
         }
         const dayTrades = byDay[cellData.key];
@@ -217,20 +202,12 @@ export default function Dashboard() {
           const wins = dayTrades.filter(t=>t.pnl>0).length;
           const winPct = Math.round(wins/dayTrades.length*100);
           cls += total >= 0 ? ' win' : ' loss';
-          body = (
-            <>
-              <div className="cal-pnl" style={{color: total>=0?'var(--green)':'var(--red)'}}>{fmt(total)}</div>
-              <div className="cal-meta">{dayTrades.length} trade{dayTrades.length===1?'':'s'} · {winPct}% win</div>
-            </>
-          );
+          body = <div className="cal-meta">{dayTrades.length} trade{dayTrades.length===1?'':'s'} · {winPct}%</div>;
         }
         cells.push(
           <div key={rowIdx+'-'+colIdx} className={cls}>
             <span className="cal-daynum">{cellData.day}</span>
             {body}
-            {isSat && weekHasData && (
-              <div className="cal-week-total" style={{color: weekTotal>=0?'var(--green)':'var(--red)'}}>Wk {fmt(weekTotal)}</div>
-            )}
           </div>
         );
       });
