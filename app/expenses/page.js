@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '../../lib/supabaseClient';
+import Sidebar from '../../components/Sidebar';
 
 const FIRMS = ['Apex Trader Funding', 'Alpha Futures', 'Topstep', 'Tradeify', 'FundedX', 'Lucid Trading'];
 
@@ -82,19 +83,9 @@ export default function Expenses() {
   const netVsPayouts = paidOut - totalSpent;
 
   return (
-    <div>
-      <div className="topbar">
-        <div style={{display:'flex', alignItems:'center', gap:24}}>
-          <strong style={{fontFamily:'var(--serif)'}}>TRADER EDGE</strong>
-          <a href="/dashboard" style={{color:'var(--text-muted)', fontSize:13.5}}>Dashboard</a>
-          <a href="/journal" style={{color:'var(--text-muted)', fontSize:13.5}}>Journal</a>
-          <a href="/log-trade" style={{color:'var(--text-muted)', fontSize:13.5}}>Log trade</a>
-          <a href="/certificates" style={{color:'var(--text-muted)', fontSize:13.5}}>Certificates</a>
-          <a href="/expenses" style={{color:'var(--gold-bright)', fontSize:13.5}}>Expenses</a>
-        </div>
-        <button className="del-btn" onClick={logOut}>Sign out</button>
-      </div>
-
+    <div className="app-shell">
+      <Sidebar />
+      <div className="app-main">
       <div className="content">
         <h1 style={{fontFamily:'var(--serif)', fontWeight:500, fontSize:28, marginBottom:20}}>Expenses</h1>
 
@@ -155,6 +146,7 @@ export default function Expenses() {
             </table>
           )}
         </div>
+      </div>
       </div>
     </div>
   );
