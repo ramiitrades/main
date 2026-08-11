@@ -172,20 +172,70 @@ export default function Dashboard() {
     const y = calDate.getFullYear(), m = calDate.getMonth();
     const firstDow = new Date(y, m, 1).getDay();
     const daysInMonth = new Date(y, m + 1, 0).getDate();
-    const cells = [];
-    let monthTotal = 0;
-    for (let i = 0; i < firstDow; i++) cells.push(<div key={'e'+i} className="cal-cell empty"></div>);
+    const byDay = stats?.byDay || {};
+
+    const flat = [];
+    for (let i = 0; i < firstDow; i++) flat.push(null);
     for (let d = 1; d <= daysInMonth; d++) {
-      const key = y + '-' + String(m+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
-      const dayTrades = stats?.byDay?.[key];
-      let cls = 'cal-cell';
-      if (dayTrades) {
-        const total = dayTrades.reduce((s,t)=>s+Number(t.pnl),0);
-        monthTotal += total;
-        cls += total >= 0 ? ' win' : ' loss';
-      }
-      cells.push(<div key={d} className={cls}>{d}</div>);
+      flat.push({ day: d, key: y + '-' + String(m+1).padStart(2,'0') + '-' + String(d).padStart(2,'0') });
     }
+    while (flat.length % 7 !== 0) flat.push(null);
+
+    const rows = [];
+    for (let i = 0; i < flat.length; i += 7) rows.push(flat.slice(i, i + 7));
+
+    let monthTotal = 0;
+    const cells = [];
+
+    rows.forEach((row, rowIdx) => {
+      let weekTotal = 0, weekHasData = false;
+      row.forEach(cellData => {
+        if (cellData && byDay[cellData.key]) {
+          weekTotal += byDay[cellData.key].reduce((s,t)=>s+Number(t.pnl),0);
+          weekHasData = true;
+        }
+      });
+
+      row.forEach((cellData, colIdx) => {
+        const isSat = colIdx === 6;
+        if (!cellData) {
+          cells.push(
+            <div key={rowIdx+'-'+colIdx} className="cal-cell empty">
+              {isSat && weekHasData && (
+                <div className="cal-week-total" style={{color: weekTotal>=0?'var(--green)':'var(--red)'}}>Wk {fmt(weekTotal)}</div>
+              )}
+            </div>
+          );
+          return;
+        }
+        const dayTrades = byDay[cellData.key];
+        let cls = 'cal-cell';
+        let body = null;
+        if (dayTrades && dayTrades.length) {
+          const total = dayTrades.reduce((s,t)=>s+Number(t.pnl),0);
+          monthTotal += total;
+          const wins = dayTrades.filter(t=>t.pnl>0).length;
+          const winPct = Math.round(wins/dayTrades.length*100);
+          cls += total >= 0 ? ' win' : ' loss';
+          body = (
+            <>
+              <div className="cal-pnl" style={{color: total>=0?'var(--green)':'var(--red)'}}>{fmt(total)}</div>
+              <div className="cal-meta">{dayTrades.length} trade{dayTrades.length===1?'':'s'} · {winPct}% win</div>
+            </>
+          );
+        }
+        cells.push(
+          <div key={rowIdx+'-'+colIdx} className={cls}>
+            <span className="cal-daynum">{cellData.day}</span>
+            {body}
+            {isSat && weekHasData && (
+              <div className="cal-week-total" style={{color: weekTotal>=0?'var(--green)':'var(--red)'}}>Wk {fmt(weekTotal)}</div>
+            )}
+          </div>
+        );
+      });
+    });
+
     return { cells, monthTotal };
   }
 
