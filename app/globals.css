@@ -131,9 +131,11 @@ canvas{max-height:220px;}
   .stat-val{font-size:18px !important;}
 
   .cal-grid{gap:3px;}
-  .cal-cell{padding:4px;}
+  .cal-panel{overflow-x:hidden;}
+  .cal-cell{padding:4px; overflow:hidden;}
   .cal-daynum{font-size:9px;}
   .cal-meta{font-size:8px;}
+  .cal-week-total{position:static !important; display:block; text-align:right; font-size:7.5px; margin-top:auto;}
 
   table{display:block; overflow-x:auto; white-space:nowrap; -webkit-overflow-scrolling:touch;}
   th, td{padding:9px 12px !important;}
