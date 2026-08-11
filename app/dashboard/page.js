@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Chart from 'chart.js/auto';
 import { createClient } from '../../lib/supabaseClient';
+import Sidebar from '../../components/Sidebar';
 
 function fmt(n) {
   const sign = n < 0 ? '-' : '';
@@ -235,19 +236,9 @@ export default function Dashboard() {
   const { cells, monthTotal } = renderCalendarCells();
 
   return (
-    <div>
-      <div className="topbar">
-        <div style={{display:'flex', alignItems:'center', gap:24}}>
-          <strong style={{fontFamily:'var(--serif)'}}>TRADER EDGE</strong>
-          <a href="/dashboard" style={{color:'var(--gold-bright)', fontSize:13.5}}>Dashboard</a>
-          <a href="/journal" style={{color:'var(--text-muted)', fontSize:13.5}}>Journal</a>
-          <a href="/log-trade" style={{color:'var(--text-muted)', fontSize:13.5}}>Log trade</a>
-          <a href="/certificates" style={{color:'var(--text-muted)', fontSize:13.5}}>Certificates</a>
-          <a href="/expenses" style={{color:'var(--text-muted)', fontSize:13.5}}>Expenses</a>
-        </div>
-        <button className="del-btn" onClick={logOut}>Sign out</button>
-      </div>
-
+    <div className="app-shell">
+      <Sidebar />
+      <div className="app-main">
       <div className="content">
         <h1 style={{fontFamily:'var(--serif)', fontWeight:500, fontSize:28, marginBottom:4}}>
           Welcome back{user?.user_metadata?.name ? `, ${user.user_metadata.name}` : ''}
@@ -333,6 +324,7 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );
