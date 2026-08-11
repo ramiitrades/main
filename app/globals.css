@@ -38,3 +38,24 @@ td{padding:10px 0; font-size:13.5px; border-bottom:1px solid var(--border-soft);
 .add-btn{background:var(--gold); color:#141008; border:none; border-radius:7px; padding:10px 16px; font-weight:600; cursor:pointer;}
 .del-btn{background:none; border:none; color:var(--text-dim); cursor:pointer;}
 .del-btn:hover{color:var(--red);}
+
+.streak-bar{background:var(--card); border:1px solid var(--border); border-radius:10px; padding:16px 20px; display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; flex-wrap:wrap; gap:12px; font-size:13.5px; color:var(--text-muted);}
+.streak-bar b{color:var(--text); font-family:var(--mono);}
+.panel-row{display:grid; grid-template-columns:1fr 1.15fr 1fr; gap:14px; margin-bottom:14px;}
+.panel-title{font-size:13.5px; color:var(--text-muted); margin-bottom:14px;}
+.edge-score-num{font-family:var(--serif); font-size:32px; font-weight:600; margin:10px 0 6px;}
+.edge-slider-track{position:relative; height:6px; border-radius:3px; margin:14px 0 6px; background:linear-gradient(90deg,#f2555a,#e6b84b,#3ecf8e);}
+.edge-slider-dot{position:absolute; top:50%; width:12px; height:12px; border-radius:50%; background:#fff; border:2px solid var(--bg); transform:translate(-50%,-50%);}
+.edge-scale{display:flex; justify-content:space-between; font-family:var(--mono); font-size:10.5px; color:var(--text-dim);}
+canvas{max-height:220px;}
+
+.cal-panel{background:var(--card); border:1px solid var(--border); border-radius:10px; padding:18px 20px;}
+.cal-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;}
+.cal-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:5px;}
+.cal-dow{text-align:center; font-size:10.5px; color:var(--text-dim); font-family:var(--mono); padding-bottom:6px;}
+.cal-cell{aspect-ratio:1; border-radius:6px; background:var(--bg-alt); display:flex; align-items:flex-end; justify-content:flex-end; padding:6px; font-family:var(--mono); font-size:11px; color:var(--text-dim);}
+.cal-cell.win{background:rgba(62,207,142,.12); color:var(--green); border:1px solid rgba(62,207,142,.25);}
+.cal-cell.loss{background:rgba(242,85,90,.1); color:var(--red); border:1px solid rgba(242,85,90,.22);}
+.cal-cell.empty{background:transparent;}
+
+@media(max-width:1000px){ .panel-row{grid-template-columns:1fr;} .stat-row{grid-template-columns:repeat(2,1fr);} }
