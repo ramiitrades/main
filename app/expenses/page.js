@@ -109,7 +109,7 @@ export default function Expenses() {
             ))}
           </div>
 
-          <div style={{display:'grid', gridTemplateColumns:'1.3fr 1fr 1fr 1fr', gap:18, marginBottom:20}}>
+          <div className="responsive-grid" style={{display:'grid', gridTemplateColumns:'1.3fr 1fr 1fr 1fr', gap:18, marginBottom:20}}>
             <div className="form-field"><label>What for</label><input type="text" placeholder="50K eval / reset" value={form.description} onChange={e=>setForm({...form, description:e.target.value})} /></div>
             <div className="form-field"><label>Amount ($)</label><input type="number" placeholder="167" value={form.amount} onChange={e=>setForm({...form, amount:e.target.value})} /></div>
             <div>
