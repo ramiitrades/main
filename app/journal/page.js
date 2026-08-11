@@ -153,6 +153,15 @@ export default function Journal() {
               )}
               {t.why_text && <div className="entry-why"><b>WHY</b>{t.why_text}</div>}
               {t.review_text && <div className="entry-why"><b>REVIEW</b>{t.review_text}</div>}
+              {(t.photo_urls||[]).length > 0 && (
+                <div style={{display:'flex', gap:8, marginTop:10}}>
+                  {t.photo_urls.map((url,i) => (
+                    <a key={i} href={url} target="_blank" rel="noreferrer">
+                      <img src={url} alt="" style={{width:70, height:70, objectFit:'cover', borderRadius:6, border:'1px solid var(--border)'}} />
+                    </a>
+                  ))}
+                </div>
+              )}
             </div>
           );
         })}
