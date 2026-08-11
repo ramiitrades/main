@@ -144,7 +144,7 @@ export default function Dashboard() {
       type: 'radar',
       data: {
         labels: ['Win %', 'Profit factor', 'Avg win/loss', 'Recovery', 'Max drawdown', 'Consistency'],
-        datasets: [{ data: stats.radarVals, backgroundColor: 'rgba(201,162,75,.15)', borderColor: '#c9a24b', pointBackgroundColor: '#e6c374', borderWidth: 2 }]
+        datasets: [{ data: stats.radarVals, backgroundColor: 'rgba(255,255,255,.12)', borderColor: '#e8e8e8', pointBackgroundColor: '#ffffff', borderWidth: 2 }]
       },
       options: { plugins: { legend: { display: false } }, scales: { r: { grid: { color: '#1b212a' }, angleLines: { color: '#1b212a' }, pointLabels: { color: '#8b93a3', font: { size: 10.5 } }, ticks: { display: false }, suggestedMin: 0, suggestedMax: 100 } } }
     });
@@ -200,6 +200,7 @@ export default function Dashboard() {
           <strong style={{fontFamily:'var(--serif)'}}>TRADER EDGE</strong>
           <a href="/dashboard" style={{color:'var(--gold-bright)', fontSize:13.5}}>Dashboard</a>
           <a href="/journal" style={{color:'var(--text-muted)', fontSize:13.5}}>Journal</a>
+          <a href="/log-trade" style={{color:'var(--text-muted)', fontSize:13.5}}>Log trade</a>
         </div>
         <button className="del-btn" onClick={logOut}>Sign out</button>
       </div>
