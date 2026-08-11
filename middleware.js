@@ -25,7 +25,7 @@ export async function middleware(request) {
 
   const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user && (request.nextUrl.pathname.startsWith('/dashboard') || request.nextUrl.pathname.startsWith('/journal') || request.nextUrl.pathname.startsWith('/log-trade') || request.nextUrl.pathname.startsWith('/expenses'))) {
+  if (!user && (request.nextUrl.pathname.startsWith('/dashboard') || request.nextUrl.pathname.startsWith('/journal') || request.nextUrl.pathname.startsWith('/log-trade') || request.nextUrl.pathname.startsWith('/expenses') || request.nextUrl.pathname.startsWith('/certificates'))) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
     return NextResponse.redirect(url);
@@ -35,5 +35,5 @@ export async function middleware(request) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/journal/:path*', '/log-trade/:path*', '/expenses/:path*'],
+  matcher: ['/dashboard/:path*', '/journal/:path*', '/log-trade/:path*', '/expenses/:path*', '/certificates/:path*'],
 };
