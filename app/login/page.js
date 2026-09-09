@@ -18,6 +18,7 @@ export default function LoginPage() {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
     if (error) { setErr(error.message); return; }
+    sessionStorage.setItem('te_just_logged_in', '1');
     router.push('/dashboard');
     router.refresh();
   }
