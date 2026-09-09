@@ -116,6 +116,8 @@ function LogTradeForm() {
     router.push('/journal');
   }
 
+  const photoCount = existingPhotos.length + newPhotos.length;
+
   return (
     <div className="app-shell">
       <Sidebar />
@@ -195,26 +197,62 @@ function LogTradeForm() {
             <textarea value={form.review_text} onChange={e=>setForm({...form, review_text:e.target.value})} placeholder="Management, mistakes, what to repeat..." />
           </div>
 
-          <div style={{marginBottom:24}}>
-            <label style={{display:'block', fontSize:12.5, color:'var(--text-muted)', marginBottom:8}}>
-              Trade screenshots — up to 3
-            </label>
-            <div style={{display:'flex', gap:10, flexWrap:'wrap'}}>
+          {/* --- Photo upload: redesigned bigger + more polished --- */}
+          <div style={{
+            background:'var(--bg-alt)', border:'1px solid var(--border)', borderRadius:12,
+            padding:20, marginBottom:24,
+          }}>
+            <div style={{display:'flex', justifyContent:'space-between', alignItems:'baseline', marginBottom:16}}>
+              <div style={{fontFamily:'var(--serif)', fontWeight:600, fontSize:15.5, color:'var(--text)'}}>Trade Screenshots</div>
+              <div style={{fontSize:12, color:'var(--text-dim)'}}>{photoCount}/3 added</div>
+            </div>
+
+            <div style={{display:'flex', gap:16, flexWrap:'wrap'}}>
               {existingPhotos.map((url, i) => (
-                <div key={'e'+i} style={{position:'relative', width:100, height:100}}>
-                  <img src={url} alt="" style={{width:'100%', height:'100%', objectFit:'cover', borderRadius:8, border:'1px solid var(--border)'}} />
-                  <button type="button" onClick={()=>removeExistingPhoto(i)} style={{position:'absolute', top:-6, right:-6, background:'var(--red)', color:'#fff', border:'none', borderRadius:'50%', width:20, height:20, fontSize:12, cursor:'pointer'}}>×</button>
+                <div key={'e'+i} style={{position:'relative', width:150, height:150}}>
+                  <img src={url} alt="" style={{width:'100%', height:'100%', objectFit:'cover', borderRadius:10, border:'1px solid var(--border)'}} />
+                  <button
+                    type="button"
+                    onClick={()=>removeExistingPhoto(i)}
+                    style={{
+                      position:'absolute', top:8, right:8, width:26, height:26, borderRadius:'50%',
+                      background:'rgba(10,10,10,.75)', border:'1px solid rgba(255,255,255,.15)',
+                      color:'#fff', fontSize:15, lineHeight:1, cursor:'pointer',
+                      display:'flex', alignItems:'center', justifyContent:'center',
+                    }}
+                  >×</button>
                 </div>
               ))}
               {newPhotos.map((file, i) => (
-                <div key={'n'+i} style={{position:'relative', width:100, height:100}}>
-                  <img src={URL.createObjectURL(file)} alt="" style={{width:'100%', height:'100%', objectFit:'cover', borderRadius:8, border:'1px solid var(--border)'}} />
-                  <button type="button" onClick={()=>removeNewPhoto(i)} style={{position:'absolute', top:-6, right:-6, background:'var(--red)', color:'#fff', border:'none', borderRadius:'50%', width:20, height:20, fontSize:12, cursor:'pointer'}}>×</button>
+                <div key={'n'+i} style={{position:'relative', width:150, height:150}}>
+                  <img src={URL.createObjectURL(file)} alt="" style={{width:'100%', height:'100%', objectFit:'cover', borderRadius:10, border:'1px solid var(--border)'}} />
+                  <button
+                    type="button"
+                    onClick={()=>removeNewPhoto(i)}
+                    style={{
+                      position:'absolute', top:8, right:8, width:26, height:26, borderRadius:'50%',
+                      background:'rgba(10,10,10,.75)', border:'1px solid rgba(255,255,255,.15)',
+                      color:'#fff', fontSize:15, lineHeight:1, cursor:'pointer',
+                      display:'flex', alignItems:'center', justifyContent:'center',
+                    }}
+                  >×</button>
                 </div>
               ))}
-              {(existingPhotos.length + newPhotos.length) < 3 && (
-                <label style={{width:100, height:100, border:'1px dashed var(--border)', borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', color:'var(--text-dim)', fontSize:24}}>
-                  +
+              {photoCount < 3 && (
+                <label style={{
+                  width:150, height:150, borderRadius:10,
+                  border:'1.5px dashed var(--border)', background:'var(--card)',
+                  display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',
+                  gap:8, cursor:'pointer', transition:'border-color .15s, background .15s',
+                }}
+                  onMouseOver={e=>{e.currentTarget.style.borderColor='var(--gold)';}}
+                  onMouseOut={e=>{e.currentTarget.style.borderColor='var(--border)';}}
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="var(--text-dim)" strokeWidth="1.6" width="30" height="30">
+                    <path d="M12 16V4M12 4l-4 4M12 4l4 4" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M4 16v3a2 2 0 002 2h12a2 2 0 002-2v-3" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  <span style={{fontSize:12.5, color:'var(--text-muted)', fontWeight:500}}>Add photo</span>
                   <input type="file" accept="image/*" multiple style={{display:'none'}} onChange={e=>addPhotos(e.target.files)} />
                 </label>
               )}
