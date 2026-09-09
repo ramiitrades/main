@@ -49,8 +49,8 @@ export default function Sidebar() {
     requestAnimationFrame(() => setToastShown(true));
     setTimeout(() => {
       setToastShown(false);
-      setTimeout(() => setToastVisible(false), 400);
-    }, 3800);
+      setTimeout(() => setToastVisible(false), 500);
+    }, 2200);
   }
 
   function toggle() {
@@ -69,22 +69,30 @@ export default function Sidebar() {
     <>
       {toastVisible && (
         <div style={{
-          position:'fixed', top:20, right:20, zIndex:100,
-          background:'#141920', border:'1px solid #262626', borderRadius:12,
-          padding:'16px 20px', boxShadow:'0 20px 50px -12px rgba(0,0,0,.6)',
-          minWidth:260, maxWidth:320,
+          position:'fixed', inset:0, zIndex:200,
+          background:'var(--bg)',
+          display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',
           opacity: toastShown ? 1 : 0,
-          transform: toastShown ? 'translateY(0)' : 'translateY(-12px)',
-          transition:'opacity .4s ease, transform .4s ease',
+          transition:'opacity .5s ease',
+          pointerEvents: toastShown ? 'auto' : 'none',
         }}>
-          <div style={{display:'flex', alignItems:'flex-start', gap:12}}>
-            <span style={{fontSize:20, lineHeight:1}}>👋</span>
-            <div>
-              <div style={{fontFamily:'var(--serif)', fontWeight:600, fontSize:15, color:'var(--text)', marginBottom:3}}>
-                {timeGreeting()}{greetName ? `, ${greetName}` : ''}
-              </div>
-              <div style={{fontSize:12.5, color:'var(--text-muted)'}}>Welcome back to Trader Edge.</div>
-            </div>
+          <div style={{
+            fontFamily:'var(--mono)', fontSize:12, letterSpacing:'.18em', textTransform:'uppercase',
+            color:'var(--gold)', marginBottom:18,
+            opacity: toastShown ? 1 : 0,
+            transform: toastShown ? 'translateY(0)' : 'translateY(8px)',
+            transition:'opacity .5s ease .1s, transform .5s ease .1s',
+          }}>
+            {timeGreeting()} · Trader Edge
+          </div>
+          <div style={{
+            fontFamily:'var(--serif)', fontWeight:600, fontSize:'clamp(34px, 6vw, 58px)',
+            color:'var(--text)', textAlign:'center', padding:'0 24px',
+            opacity: toastShown ? 1 : 0,
+            transform: toastShown ? 'translateY(0)' : 'translateY(14px)',
+            transition:'opacity .5s ease .15s, transform .5s ease .15s',
+          }}>
+            Welcome back{greetName ? `, ${greetName}` : ''}
           </div>
         </div>
       )}
