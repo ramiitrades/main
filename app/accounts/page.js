@@ -90,10 +90,10 @@ export default function Accounts() {
       <Sidebar />
       <div className="app-main">
       <div className="content">
-        <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-end', marginBottom:20, flexWrap:'wrap', gap:16}}>
+        <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:24, flexWrap:'wrap', gap:16}}>
           <div>
             <h1 style={{fontFamily:'var(--serif)', fontWeight:500, fontSize:28, marginBottom:4}}>Accounts</h1>
-            <p style={{color:'var(--text-dim)'}}>Every prop account you're running, with live balances.</p>
+            <p style={{color:'var(--text-dim)', fontSize:13.5}}>Every prop account you're running, with live balances.</p>
           </div>
           <button className="add-btn" onClick={startAdd}>+ Add account</button>
         </div>
@@ -120,25 +120,50 @@ export default function Accounts() {
           </div>
         )}
 
-        <div className="card-grid">
+        <div className="responsive-grid" style={{display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(260px, 1fr))', gap:14}}>
           {accounts.map(a => {
             const accTrades = trades.filter(t => t.account_id === a.id);
             const net = accTrades.reduce((s,t)=>s+Number(t.pnl),0);
             const balance = (a.starting_balance||0) + net;
             const wins = accTrades.filter(t=>t.pnl>0).length;
             const winPct = accTrades.length ? Math.round(wins/accTrades.length*100) : 0;
+            const isFunded = a.status === 'funded';
             return (
-              <div key={a.id} className="obj-card">
-                <button className="card-del" onClick={()=>deleteAccount(a.id)}>×</button>
-                <div className="obj-title">{a.name}</div>
-                <div className="obj-sub">{a.firm || '—'} · {a.status==='funded' ? 'Funded' : 'Evaluation'}</div>
-                <div className="stat-val" style={{fontSize:22, color: balance>=(a.starting_balance||0) ? 'var(--green)' : 'var(--red)'}}>{fmt(balance)}</div>
-                <div className="obj-stat-row">
-                  <span><b>{accTrades.length}</b> trades</span>
-                  <span><b>{winPct}%</b> WR</span>
-                  <span><b style={{color: net>=0?'var(--green)':'var(--red)'}}>{fmt(net)}</b> net</span>
+              <div key={a.id} style={{background:'var(--card)', border:'1px solid var(--border)', borderRadius:10, padding:20, position:'relative'}}>
+                <button
+                  onClick={()=>deleteAccount(a.id)}
+                  title="Delete account"
+                  style={{position:'absolute', top:14, right:14, background:'none', border:'none', color:'var(--text-dim)', fontSize:18, lineHeight:1, cursor:'pointer'}}
+                  onMouseOver={e=>e.currentTarget.style.color='var(--red)'}
+                  onMouseOut={e=>e.currentTarget.style.color='var(--text-dim)'}
+                >×</button>
+
+                <div style={{fontFamily:'var(--serif)', fontWeight:600, fontSize:17, marginBottom:6, paddingRight:24}}>{a.name}</div>
+
+                <div style={{display:'flex', alignItems:'center', gap:8, marginBottom:16}}>
+                  <span style={{fontSize:12.5, color:'var(--text-muted)'}}>{a.firm ? a.firm : 'No firm set'}</span>
+                  <span style={{
+                    fontSize:10.5, fontWeight:600, letterSpacing:'.03em', padding:'3px 9px', borderRadius:20,
+                    color: isFunded ? 'var(--green)' : 'var(--gold-bright)',
+                    background: isFunded ? 'rgba(62,207,142,.12)' : 'rgba(230,195,116,.12)',
+                    border: isFunded ? '1px solid rgba(62,207,142,.3)' : '1px solid rgba(230,195,116,.3)',
+                  }}>{isFunded ? 'FUNDED' : 'EVALUATION'}</span>
                 </div>
-                <button className="edit-link" style={{marginTop:10, display:'inline-block'}} onClick={()=>startEdit(a)}>Edit</button>
+
+                <div style={{fontFamily:'var(--mono)', fontWeight:700, fontSize:26, color: balance>=(a.starting_balance||0) ? 'var(--green)' : 'var(--red)', marginBottom:16}}>
+                  {fmt(balance)}
+                </div>
+
+                <div style={{borderTop:'1px solid var(--border-soft)', paddingTop:12, display:'flex', justifyContent:'space-between', fontSize:12.5, color:'var(--text-muted)', marginBottom:16}}>
+                  <span><b style={{color:'var(--text)', fontFamily:'var(--mono)'}}>{accTrades.length}</b> trades</span>
+                  <span><b style={{color:'var(--text)', fontFamily:'var(--mono)'}}>{winPct}%</b> win rate</span>
+                  <span><b style={{color: net>=0?'var(--green)':'var(--red)', fontFamily:'var(--mono)'}}>{fmt(net)}</b> net</span>
+                </div>
+
+                <button
+                  onClick={()=>startEdit(a)}
+                  style={{width:'100%', background:'var(--bg-alt)', border:'1px solid var(--border)', color:'var(--text)', borderRadius:7, padding:'8px', fontSize:12.5, cursor:'pointer'}}
+                >Edit account</button>
               </div>
             );
           })}
