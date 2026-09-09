@@ -25,11 +25,11 @@ export default function SignupPage() {
     setLoading(false);
     if (error) { setErr(error.message); return; }
 
-    // If email confirmations are on, there's no session yet.
     if (!data.session) {
       setMsg('Check your inbox to confirm your email, then log in.');
       return;
     }
+    sessionStorage.setItem('te_just_logged_in', '1');
     router.push('/dashboard');
     router.refresh();
   }
