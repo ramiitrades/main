@@ -21,6 +21,7 @@ function LogTradeForm() {
   const [form, setForm] = useState({
     date: new Date().toISOString().slice(0,10),
     symbol: '', pnl: '', r_multiple: '',
+    position_size: '', risk_amount: '',
     account_id: '', session: 'NY AM', direction: 'Long', grade: 'A',
     setup: '', followed_plan: true, mistakes: [], why_text: '', review_text: '',
   });
@@ -44,6 +45,7 @@ function LogTradeForm() {
         setForm({
           date: trade.trade_date, symbol: trade.symbol, pnl: trade.pnl,
           r_multiple: trade.r_multiple ?? '',
+          position_size: trade.position_size ?? '', risk_amount: trade.risk_amount ?? '',
           account_id: trade.account_id || '', session: trade.session || 'NY AM',
           direction: trade.direction || 'Long', grade: trade.grade || 'A',
           setup: trade.setup || '', followed_plan: trade.followed_plan ?? true,
@@ -101,6 +103,8 @@ function LogTradeForm() {
       setup: form.setup, followed_plan: form.followed_plan, mistakes: form.mistakes,
       why_text: form.why_text, review_text: form.review_text,
       r_multiple: form.r_multiple === '' ? null : parseFloat(form.r_multiple),
+      position_size: form.position_size === '' ? null : parseFloat(form.position_size),
+      risk_amount: form.risk_amount === '' ? null : parseFloat(form.risk_amount),
       no_trade_day: noTradeDay,
       photo_urls: [...existingPhotos, ...uploadedUrls],
     };
@@ -138,6 +142,11 @@ function LogTradeForm() {
                 {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
               </select>
             </div>
+          </div>
+
+          <div className="form-grid" style={{gridTemplateColumns:'1fr 1fr'}}>
+            <div className="form-field"><label>Position size</label><input type="number" step="0.01" placeholder="e.g. 3 contracts" value={form.position_size} onChange={e=>setForm({...form, position_size:e.target.value})} /></div>
+            <div className="form-field"><label>Amount risked ($)</label><input type="number" step="0.01" placeholder="e.g. 200" value={form.risk_amount} onChange={e=>setForm({...form, risk_amount:e.target.value})} /></div>
           </div>
 
           <div className="form-grid" style={{gridTemplateColumns:'1fr'}}>
