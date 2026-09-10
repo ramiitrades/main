@@ -127,34 +127,38 @@ export default function Journal() {
           const accName = accounts.find(a => a.id === t.account_id)?.name;
           return (
             <div key={t.id} className={`entry-card ${t.pnl < 0 ? 'loss' : ''}`}>
-              <div className="entry-head">
-                <span className="entry-pnl" style={{color: t.pnl >= 0 ? 'var(--green)' : 'var(--red)'}}>{fmt(t.pnl)}</span>
-                <span className="entry-meta">{t.trade_date}</span>
-                <span className="entry-meta">{t.symbol}</span>
-                {t.direction && <span className={`badge-chip ${t.direction==='Long'?'long':'short'}`}>{t.direction.toUpperCase()}</span>}
-                {t.session && <span className="badge-chip">{t.session}</span>}
-                {t.grade && <span className="badge-chip grade">{t.grade}</span>}
-                {t.setup && <span className="entry-meta">{t.setup}</span>}
-                {accName && <span className="entry-meta" style={{marginLeft:'auto'}}>{accName}</span>}
-                <button className="del-btn" onClick={()=>router.push('/log-trade?id='+t.id)} style={{border:'1px solid var(--border)', borderRadius:6, padding:'4px 10px', fontSize:12}}>Edit</button>
-                <button className="del-btn" onClick={()=>deleteTrade(t.id)} title="Delete">×</button>
-              </div>
-              {(t.mistakes||[]).length > 0 && (
-                <div style={{marginBottom:6}}>
-                  {t.mistakes.map(m => <span key={m} className="mistake-tag">{m}</span>)}
-                </div>
-              )}
-              {t.why_text && <div className="entry-why"><b>WHY</b>{t.why_text}</div>}
-              {t.review_text && <div className="entry-why"><b>REVIEW</b>{t.review_text}</div>}
               {(t.photo_urls||[]).length > 0 && (
-                <div style={{display:'flex', gap:8, marginTop:10}}>
+                <div className="entry-thumbs">
                   {t.photo_urls.map((url,i) => (
-                    <a key={i} href={url} target="_blank" rel="noreferrer">
-                      <img src={url} alt="" style={{width:70, height:70, objectFit:'cover', borderRadius:6, border:'1px solid var(--border)'}} />
+                    <a key={i} href={url} target="_blank" rel="noreferrer" className="entry-thumb">
+                      <img src={url} alt="Trade chart" />
                     </a>
                   ))}
                 </div>
               )}
+              <div className="entry-body">
+                <div className="entry-head">
+                  <span className="entry-pnl" style={{color: t.pnl >= 0 ? 'var(--green)' : 'var(--red)'}}>{fmt(t.pnl)}</span>
+                  <span className="entry-meta">{t.trade_date}</span>
+                  <span className="entry-meta">{t.symbol}</span>
+                  {t.direction && <span className={`badge-chip ${t.direction==='Long'?'long':'short'}`}>{t.direction.toUpperCase()}</span>}
+                  {t.session && <span className="badge-chip">{t.session}</span>}
+                  {t.grade && <span className="badge-chip grade">{t.grade}</span>}
+                  {t.setup && <span className="entry-meta">{t.setup}</span>}
+                  <div className="entry-actions">
+                    {accName && <span className="entry-account">{accName}</span>}
+                    <button className="del-btn" onClick={()=>router.push('/log-trade?id='+t.id)}>Edit</button>
+                    <button className="del-btn" onClick={()=>deleteTrade(t.id)} title="Delete">×</button>
+                  </div>
+                </div>
+                {(t.mistakes||[]).length > 0 && (
+                  <div style={{marginBottom:6}}>
+                    {t.mistakes.map(m => <span key={m} className="mistake-tag">{m}</span>)}
+                  </div>
+                )}
+                {t.why_text && <div className="entry-why"><b>WHY</b>{t.why_text}</div>}
+                {t.review_text && <div className="entry-why"><b>REVIEW</b>{t.review_text}</div>}
+              </div>
             </div>
           );
         })}
