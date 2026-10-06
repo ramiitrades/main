@@ -106,14 +106,19 @@ export default function Dashboard() {
     const winDays = dayTotals.filter(v => v > 0).length;
     const dayWinPct = dayKeys.length ? (winDays / dayKeys.length * 100) : 0;
 
+    // Plan-followed streak + adherence use the "Followed plan?" answer saved on each trade.
+    // A trade with no answer saved counts as followed (same default as the Log trade form).
+    const realTrades = trades
+      .filter(t => !t.no_trade_day)
+      .sort((a, b) => String(a.trade_date).localeCompare(String(b.trade_date)) || String(a.created_at || '').localeCompare(String(b.created_at || '')));
+    const followed = (t) => t.followed_plan !== false;
     let streak = 0;
-    for (let i = dayTotals.length - 1; i >= 0; i--) { if (dayTotals[i] > 0) streak++; else break; }
+    for (let i = realTrades.length - 1; i >= 0; i--) { if (followed(realTrades[i])) streak++; else break; }
+    const adherence = realTrades.length ? Math.round((realTrades.filter(followed).length / realTrades.length) * 100) : null;
 
     const now = new Date();
     const startOfWeek = new Date(now); startOfWeek.setDate(now.getDate() - now.getDay());
     const weekdayKeys = dayKeys.filter(k => new Date(k + 'T00:00:00') >= startOfWeek);
-    const businessDaysSoFar = Math.min(now.getDay() === 0 ? 7 : now.getDay(), 5) || 1;
-    const adherence = Math.min(100, Math.round((weekdayKeys.length / businessDaysSoFar) * 100));
 
     let running = 0;
     const cumulative = dayTotals.map(v => running += v);
@@ -286,7 +291,7 @@ export default function Dashboard() {
             </div>
 
             <div className="streak-bar">
-              <span>🔥 <b>{stats.streak}</b> plan-followed streak &nbsp;·&nbsp; <b>{stats.weekdayCount}</b> weekdays accounted for &nbsp;·&nbsp; <b>{stats.adherence}%</b> plan adherence</span>
+              <span>🔥 <b>{stats.streak}</b> plan-followed streak &nbsp;·&nbsp; <b>{stats.weekdayCount}</b> weekdays accounted for &nbsp;·&nbsp; <b>{stats.adherence === null ? '—' : stats.adherence + '%'}</b> plan adherence</span>
             </div>
 
             <div className="panel-row">
