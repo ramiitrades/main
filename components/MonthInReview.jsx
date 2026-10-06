@@ -16,8 +16,8 @@ const RED = '#f2555a';
 const AMBER = '#e0b45a';
 const DIM = '#8b93a3';
 const CARD = '#0b0d10';
-const MONO = "var(--mono, ui-monospace, SFMono-Regular, Menlo, monospace)";
-const SERIF = "var(--serif, Georgia, serif)";
+const MONO = 'inherit'; // numbers and labels use the same clean font as the rest of the app
+const SERIF = 'inherit';
 
 function money(n, { sign = false, decimals = 2 } = {}) {
   const abs = Math.abs(n).toLocaleString(undefined, {
@@ -165,7 +165,7 @@ export function buildReview(allTrades, monthDate) {
 function Chip({ children, color = GREEN }) {
   return (
     <div style={{
-      display: 'inline-block', fontFamily: MONO, fontSize: 12, letterSpacing: 2,
+      display: 'inline-block', fontFamily: MONO, fontSize: 11.5, fontWeight: 500, letterSpacing: '.08em',
       textTransform: 'uppercase', color, border: `1px solid ${color}55`,
       background: `${color}14`, padding: '7px 14px', borderRadius: 999,
     }}>{children}</div>
@@ -175,8 +175,8 @@ function Chip({ children, color = GREEN }) {
 function Stat({ label, value, color }) {
   return (
     <div style={{ textAlign: 'center' }}>
-      <div style={{ fontFamily: MONO, fontSize: 22, fontWeight: 700, color: color || '#e8e8e8' }}>{value}</div>
-      <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: 1.5, color: DIM, textTransform: 'uppercase', marginTop: 4 }}>{label}</div>
+      <div style={{ fontFamily: MONO, fontSize: 22, fontWeight: 600, color: color || '#e8e8e8' }}>{value}</div>
+      <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '.07em', color: DIM, textTransform: 'uppercase', marginTop: 4 }}>{label}</div>
     </div>
   );
 }
@@ -229,7 +229,7 @@ function TradeCard({ t, color }) {
         />
       )}
       <div style={{ fontFamily: MONO, fontSize: 11, color: DIM, marginBottom: 8 }}>{prettyDate(t.trade_date)}</div>
-      <div style={{ fontSize: 20, fontWeight: 700, color: '#fff' }}>
+      <div style={{ fontSize: 20, fontWeight: 600, color: '#fff' }}>
         {t.symbol} <span style={{ fontSize: 12, fontWeight: 500, color: DIM }}>{(t.direction || '').toUpperCase()}</span>
       </div>
       <div style={{ fontSize: 12.5, color: DIM, marginTop: 6 }}>
@@ -251,44 +251,44 @@ function ShareCardPreview({ r }) {
   const up = r.net >= 0;
   const miniBox = (label, t, color) => (
     <div style={{ flex: 1, border: `1px solid ${color}44`, background: `${color}0f`, borderRadius: 12, padding: 10, textAlign: 'left' }}>
-      <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: 1.5, color: DIM }}>{label}</div>
-      <div style={{ fontFamily: MONO, fontSize: 17, fontWeight: 700, color, marginTop: 5 }}>{money(Number(t.pnl), { sign: true })}</div>
+      <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '.07em', color: DIM }}>{label}</div>
+      <div style={{ fontFamily: MONO, fontSize: 17, fontWeight: 600, color, marginTop: 5 }}>{money(Number(t.pnl), { sign: true })}</div>
       <div style={{ fontSize: 10.5, color: DIM, marginTop: 3 }}>{t.symbol} {(t.direction || '').toUpperCase()}</div>
     </div>
   );
   return (
     <div style={{ width: '100%', border: '1px solid #232933', borderRadius: 18, padding: 16, textAlign: 'left', background: '#0f1217' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ fontFamily: MONO, fontSize: 9.5, letterSpacing: 2, color: DIM }}>TRADER EDGE</div>
-        <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: 1.5, color: GREEN, border: `1px solid ${GREEN}55`, borderRadius: 99, padding: '3px 8px' }}>MONTHLY RECAP</div>
+        <div style={{ fontFamily: MONO, fontSize: 10.5, letterSpacing: '.08em', color: DIM }}>TRADER EDGE</div>
+        <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '.07em', color: GREEN, border: `1px solid ${GREEN}55`, borderRadius: 99, padding: '3px 8px' }}>MONTHLY RECAP</div>
       </div>
       <div style={{ fontSize: 24, fontWeight: 600, color: '#e8e8e8', marginTop: 10 }}>
         {r.monthName} <span style={{ color: '#5d6572', fontWeight: 400 }}>{r.year}</span>
       </div>
-      <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: 1.5, color: DIM, marginTop: 8 }}>NET P&amp;L</div>
-      <div style={{ fontFamily: MONO, fontSize: 34, fontWeight: 700, color: up ? GREEN : RED, lineHeight: 1.1, marginTop: 2 }}>
+      <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '.07em', color: DIM, marginTop: 8 }}>NET P&amp;L</div>
+      <div style={{ fontFamily: MONO, fontSize: 34, fontWeight: 600, color: up ? GREEN : RED, lineHeight: 1.1, marginTop: 2 }}>
         {money(r.net, { sign: true })}
       </div>
-      <div style={{ fontFamily: MONO, fontSize: 9.5, color: DIM, marginTop: 6 }}>
+      <div style={{ fontFamily: MONO, fontSize: 10.5, color: DIM, marginTop: 6 }}>
         Best day {money(r.bestDayPnl, { sign: true, decimals: 0 })} · Worst day {money(r.worstDayPnl, { sign: true, decimals: 0 })}
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', border: '1px solid #232933', borderRadius: 12, padding: '10px 6px', marginTop: 14 }}>
         {[[`${r.winRate}%`, 'WIN RATE'], [r.rrText, 'AVG R:R'], [r.tradeCount, 'TRADES'], [r.dayCount, 'DAYS']].map(([v, l]) => (
           <div key={l} style={{ flex: 1, textAlign: 'center' }}>
-            <div style={{ fontFamily: MONO, fontSize: 16, fontWeight: 700, color: '#e8e8e8' }}>{v}</div>
-            <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: 1.2, color: DIM, marginTop: 3 }}>{l}</div>
+            <div style={{ fontFamily: MONO, fontSize: 16, fontWeight: 600, color: '#e8e8e8' }}>{v}</div>
+            <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '.07em', color: DIM, marginTop: 3 }}>{l}</div>
           </div>
         ))}
       </div>
 
       <div style={{ border: '1px solid #232933', borderRadius: 12, padding: '10px 12px 8px', marginTop: 10 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: MONO, fontSize: 8.5, letterSpacing: 1.2, color: DIM, marginBottom: 6 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: MONO, fontSize: 9.5, letterSpacing: '.07em', color: DIM, marginBottom: 6 }}>
           <span>EQUITY CURVE</span>
           <span style={{ color: up ? GREEN : RED }}>{money(r.net, { sign: true })}</span>
         </div>
         <EquityLine values={r.cumulative} height={80} id="mirFillShare" />
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: MONO, fontSize: 8.5, color: '#5d6572', marginTop: 4 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: MONO, fontSize: 9.5, color: '#5d6572', marginTop: 4 }}>
           <span>{r.firstDayLabel}</span><span>{r.lastDayLabel}</span>
         </div>
       </div>
@@ -308,8 +308,9 @@ export function drawShareCard(canvas, r) {
   const W = 1080, H = 1350;
   canvas.width = W; canvas.height = H;
   const c = canvas.getContext('2d');
-  const mono = 'ui-monospace, SFMono-Regular, Menlo, monospace';
-  const sans = 'system-ui, -apple-system, Segoe UI, sans-serif';
+  const bodyFont = typeof document !== 'undefined' ? getComputedStyle(document.body).fontFamily : '';
+  const sans = bodyFont || 'system-ui, -apple-system, Segoe UI, sans-serif';
+  const mono = sans; // numbers and labels use the same clean font
   const up = r.net >= 0;
   const accent = up ? GREEN : RED;
 
@@ -345,7 +346,7 @@ export function drawShareCard(canvas, r) {
   // net pnl
   c.fillStyle = DIM; c.font = `500 24px ${mono}`;
   c.fillText('NET P&L', 80, 285);
-  c.fillStyle = accent; c.font = `700 128px ${mono}`;
+  c.fillStyle = accent; c.font = `600 128px ${mono}`;
   c.fillText(money(r.net, { sign: true }), 80, 410);
   c.fillStyle = DIM; c.font = `500 24px ${mono}`;
   c.fillText(`Best day ${money(r.bestDayPnl, { sign: true, decimals: 0 })}  ·  Worst day ${money(r.worstDayPnl, { sign: true, decimals: 0 })}`, 80, 460);
@@ -356,7 +357,7 @@ export function drawShareCard(canvas, r) {
   c.textAlign = 'center';
   stats.forEach(([v, l], i) => {
     const cx = 80 + 920 / 8 + i * (920 / 4);
-    c.fillStyle = '#e8e8e8'; c.font = `700 50px ${mono}`; c.fillText(v, cx, 570);
+    c.fillStyle = '#e8e8e8'; c.font = `600 50px ${mono}`; c.fillText(v, cx, 570);
     c.fillStyle = DIM; c.font = `500 18px ${mono}`; c.fillText(l, cx, 604);
   });
   c.textAlign = 'left';
@@ -393,7 +394,7 @@ export function drawShareCard(canvas, r) {
   const box = (x, label, t, color) => {
     panel(x, 990, 440, 210, color + '10', color + '55');
     c.fillStyle = DIM; c.font = `500 20px ${mono}`; c.fillText(label, x + 30, 1040);
-    c.fillStyle = color; c.font = `700 58px ${mono}`; c.fillText(money(Number(t.pnl), { sign: true }), x + 30, 1112);
+    c.fillStyle = color; c.font = `600 58px ${mono}`; c.fillText(money(Number(t.pnl), { sign: true }), x + 30, 1112);
     c.fillStyle = '#aab0bc'; c.font = `500 24px ${sans}`;
     c.fillText(`${t.symbol} ${(t.direction || '').toUpperCase()}`.trim(), x + 30, 1160);
   };
@@ -457,7 +458,7 @@ export default function MonthInReview({ trades, monthDate, onClose, startAt = 0 
       return (
         <>
           <Chip color={DIM}>Month in review</Chip>
-          <div style={{ fontFamily: SERIF, fontSize: 30, color: '#fff', marginTop: 24 }}>{r.monthName} {r.year}</div>
+          <div style={{ fontFamily: SERIF, fontSize: 28, fontWeight: 600, letterSpacing: '-.02em', color: '#fff', marginTop: 24 }}>{r.monthName} {r.year}</div>
           <div style={{ color: DIM, marginTop: 12, fontSize: 14 }}>No trades logged this month yet.</div>
         </>
       );
@@ -466,7 +467,7 @@ export default function MonthInReview({ trades, monthDate, onClose, startAt = 0 
       return (
         <>
           <Chip color={DIM}>Month in review</Chip>
-          <div style={{ fontFamily: SERIF, fontSize: 46, color: '#fff', marginTop: 28, lineHeight: 1.05 }}>
+          <div style={{ fontFamily: SERIF, fontSize: 42, fontWeight: 600, letterSpacing: '-.03em', color: '#fff', marginTop: 28, lineHeight: 1.05 }}>
             {r.monthName} <span style={{ color: '#5d6572' }}>{r.year}</span>
           </div>
           <div style={{ fontFamily: MONO, fontSize: 12, color: DIM, marginTop: 18 }}>
@@ -480,7 +481,7 @@ export default function MonthInReview({ trades, monthDate, onClose, startAt = 0 
       return (
         <>
           <Chip color={up ? GREEN : RED}>Net result</Chip>
-          <div style={{ fontFamily: MONO, fontSize: 44, fontWeight: 700, color: up ? GREEN : RED, marginTop: 26 }}>
+          <div style={{ fontFamily: MONO, fontSize: 48, fontWeight: 600, letterSpacing: '-.025em', color: up ? GREEN : RED, marginTop: 26 }}>
             {money(r.net, { sign: true })}
           </div>
           <div style={{ display: 'flex', gap: 30, marginTop: 28 }}>
@@ -498,13 +499,13 @@ export default function MonthInReview({ trades, monthDate, onClose, startAt = 0 
           <div style={{ width: '100%', marginTop: 28 }}><EquityLine values={r.cumulative} /></div>
           <div style={{ display: 'flex', gap: 12, width: '100%', marginTop: 24 }}>
             <div style={{ flex: 1, border: `1px solid ${GREEN}44`, background: `${GREEN}0f`, borderRadius: 12, padding: 12, textAlign: 'left' }}>
-              <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: 1.5, color: DIM }}>BEST DAY</div>
-              <div style={{ fontFamily: MONO, fontSize: 18, fontWeight: 700, color: GREEN, marginTop: 6 }}>{money(r.dayTotals[r.bestIdx], { sign: true })}</div>
+              <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '.07em', color: DIM }}>BEST DAY</div>
+              <div style={{ fontFamily: MONO, fontSize: 18, fontWeight: 600, color: GREEN, marginTop: 6 }}>{money(r.dayTotals[r.bestIdx], { sign: true })}</div>
               <div style={{ fontSize: 11, color: DIM, marginTop: 4 }}>{prettyDate(r.dayKeys[r.bestIdx])}</div>
             </div>
             <div style={{ flex: 1, border: `1px solid ${RED}44`, background: `${RED}0f`, borderRadius: 12, padding: 12, textAlign: 'left' }}>
-              <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: 1.5, color: DIM }}>WORST DAY</div>
-              <div style={{ fontFamily: MONO, fontSize: 18, fontWeight: 700, color: RED, marginTop: 6 }}>{money(r.dayTotals[r.worstIdx], { sign: true })}</div>
+              <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '.07em', color: DIM }}>WORST DAY</div>
+              <div style={{ fontFamily: MONO, fontSize: 18, fontWeight: 600, color: RED, marginTop: 6 }}>{money(r.dayTotals[r.worstIdx], { sign: true })}</div>
               <div style={{ fontSize: 11, color: DIM, marginTop: 4 }}>{prettyDate(r.dayKeys[r.worstIdx])}</div>
             </div>
           </div>
@@ -517,7 +518,7 @@ export default function MonthInReview({ trades, monthDate, onClose, startAt = 0 
       return (
         <>
           <Chip color={color}>{current === 'best' ? 'Best trade' : 'Worst trade'}</Chip>
-          <div style={{ fontFamily: MONO, fontSize: 40, fontWeight: 700, color, marginTop: 22 }}>
+          <div style={{ fontFamily: MONO, fontSize: 42, fontWeight: 600, letterSpacing: '-.025em', color, marginTop: 22 }}>
             {money(Number(t.pnl), { sign: true })}
           </div>
           <TradeCard t={t} color={color} />
@@ -547,14 +548,14 @@ export default function MonthInReview({ trades, monthDate, onClose, startAt = 0 
           <div style={{ display: 'flex', gap: 12, width: '100%', marginTop: 16 }}>
             {r.topSetup && (
               <div style={{ flex: 1, border: '1px solid #232933', borderRadius: 12, padding: 12, textAlign: 'left' }}>
-                <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: 1.5, color: DIM }}>TOP SETUP</div>
+                <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '.07em', color: DIM }}>TOP SETUP</div>
                 <div style={{ fontSize: 15, fontWeight: 600, color: '#fff', marginTop: 6 }}>{r.topSetup.name}</div>
                 <div style={{ fontFamily: MONO, fontSize: 12, color: r.topSetup.pnl >= 0 ? GREEN : RED, marginTop: 4 }}>{money(r.topSetup.pnl, { sign: true })}</div>
               </div>
             )}
             {r.topSession && (
               <div style={{ flex: 1, border: '1px solid #232933', borderRadius: 12, padding: 12, textAlign: 'left' }}>
-                <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: 1.5, color: DIM }}>TOP SESSION</div>
+                <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '.07em', color: DIM }}>TOP SESSION</div>
                 <div style={{ fontSize: 15, fontWeight: 600, color: '#fff', marginTop: 6 }}>{r.topSession.name}</div>
                 <div style={{ fontFamily: MONO, fontSize: 12, color: r.topSession.pnl >= 0 ? GREEN : RED, marginTop: 4 }}>{money(r.topSession.pnl, { sign: true })}</div>
               </div>
@@ -570,7 +571,7 @@ export default function MonthInReview({ trades, monthDate, onClose, startAt = 0 
           <div style={{ width: '100%', textAlign: 'left', marginTop: 24 }}>
             {r.breakdown.map((b) => (
               <div key={b.title} style={{ marginBottom: 18 }}>
-                <div style={{ fontFamily: MONO, fontSize: 10.5, letterSpacing: 1.5, color: GREEN, textTransform: 'uppercase' }}>{b.title}</div>
+                <div style={{ fontFamily: MONO, fontSize: 10.5, letterSpacing: '.07em', color: GREEN, textTransform: 'uppercase' }}>{b.title}</div>
                 <div style={{ fontSize: 13.5, color: '#c3c8d2', lineHeight: 1.5, marginTop: 5 }}>{b.text}</div>
               </div>
             ))}
@@ -589,12 +590,12 @@ export default function MonthInReview({ trades, monthDate, onClose, startAt = 0 
             onClick={() => shareOrDownload(canvasRef.current, r)}
             style={{
               pointerEvents: 'auto', background: GREEN, color: '#04210f', border: 'none',
-              borderRadius: 12, padding: '12px 28px', fontWeight: 700, fontSize: 14, cursor: 'pointer',
+              borderRadius: 12, padding: '12px 28px', fontWeight: 600, fontSize: 14, cursor: 'pointer',
             }}
           >↑ Share</button>
           <button
             type="button" onClick={onClose}
-            style={{ pointerEvents: 'auto', background: 'transparent', color: DIM, border: 'none', fontFamily: MONO, letterSpacing: 1.5, fontSize: 13, cursor: 'pointer', padding: '12px 14px' }}
+            style={{ pointerEvents: 'auto', background: 'transparent', color: DIM, border: 'none', fontFamily: MONO, letterSpacing: '.07em', fontSize: 13, cursor: 'pointer', padding: '12px 14px' }}
           >DONE</button>
           <button
             type="button" onClick={() => setI(0)}
@@ -607,7 +608,7 @@ export default function MonthInReview({ trades, monthDate, onClose, startAt = 0 
   }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,.92)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,.92)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontVariantNumeric: 'tabular-nums' }}>
       <style>{`
         @keyframes mirFill { from { width: 0% } to { width: 100% } }
         @keyframes mirIn { from { opacity: 0; transform: translateY(14px) } to { opacity: 1; transform: none } }
@@ -659,7 +660,7 @@ export default function MonthInReview({ trades, monthDate, onClose, startAt = 0 
         </div>
 
         {!isLast && (
-          <div style={{ position: 'absolute', bottom: 14, left: 0, right: 0, textAlign: 'center', fontFamily: MONO, fontSize: 10, letterSpacing: 1.5, color: '#4b5361', zIndex: 2, pointerEvents: 'none' }}>
+          <div style={{ position: 'absolute', bottom: 14, left: 0, right: 0, textAlign: 'center', fontFamily: MONO, fontSize: 11, letterSpacing: '.07em', color: '#4b5361', zIndex: 2, pointerEvents: 'none' }}>
             TAP TO CONTINUE
           </div>
         )}
