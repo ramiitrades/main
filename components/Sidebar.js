@@ -5,6 +5,7 @@ import { createClient } from '../lib/supabaseClient';
 
 const NAV = [
   { href: '/dashboard', label: 'Dashboard', icon: <path d="M3 3h7v9H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 16h7v5H3z" /> },
+  { href: '/game-plan', label: 'Game plan', icon: <><rect x="5" y="4" width="14" height="17" rx="2" /><path d="M9 9h6M9 13h6M9 17h3" /></> },
   { href: '/accounts', label: 'Accounts', icon: <><rect x="3" y="6" width="18" height="13" rx="2" /><path d="M3 10h18" /></> },
   { href: '/journal', label: 'Journal', icon: <path d="M4 4h13a2 2 0 0 1 2 2v14l-3-2-3 2-3-2-3 2-3-2V4z" /> },
   { href: '/log-trade', label: 'Log trade', icon: <path d="M12 5v14M5 12h14" /> },
