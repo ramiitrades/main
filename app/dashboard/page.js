@@ -5,6 +5,7 @@ import Chart from 'chart.js/auto';
 import { createClient } from '../../lib/supabaseClient';
 import Sidebar from '../../components/Sidebar';
 import RangeToggle, { useRangeFilter, rangeLabel } from '../../components/RangeFilter';
+import MonthInReview from '../../components/MonthInReview';
 
 function fmt(n) {
   const sign = n < 0 ? '-' : '';
@@ -20,6 +21,7 @@ export default function Dashboard() {
   const [accounts, setAccounts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [calDate, setCalDate] = useState(new Date());
+  const [showReview, setShowReview] = useState(false);
   const [form, setForm] = useState({ date: new Date().toISOString().slice(0,10), symbol: '', pnl: '', notes: '', account_id: '' });
 
   // Week / Month / All time filter for the stats and charts
@@ -261,7 +263,16 @@ export default function Dashboard() {
         </h1>
         <p style={{color:'var(--text-dim)', marginBottom:16}}>{filteredTrades.length} trade{filteredTrades.length===1?'':'s'} {rangeLabel(range)}</p>
 
-        <RangeToggle range={range} setRange={setRange} />
+        <div style={{display:'flex', gap:12, alignItems:'flex-start', flexWrap:'wrap'}}>
+          <RangeToggle range={range} setRange={setRange} />
+          <button type="button" className="toggle-btn" onClick={()=>setShowReview(true)}>
+            ✨ {calDate.toLocaleDateString(undefined,{month:'long'})} in review
+          </button>
+        </div>
+
+        {showReview && (
+          <MonthInReview trades={trades} monthDate={calDate} onClose={()=>setShowReview(false)} />
+        )}
 
         {!stats && (
           <div className="panel" style={{textAlign:'center', color:'var(--text-muted)'}}>
