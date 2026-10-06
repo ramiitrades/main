@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import Chart from 'chart.js/auto';
 import { createClient } from '../../lib/supabaseClient';
 import Sidebar from '../../components/Sidebar';
+import RangeToggle, { useRangeFilter, rangeLabel } from '../../components/RangeFilter';
 
 function fmt(n) {
   const sign = n < 0 ? '-' : '';
@@ -20,6 +21,9 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [calDate, setCalDate] = useState(new Date());
   const [form, setForm] = useState({ date: new Date().toISOString().slice(0,10), symbol: '', pnl: '', notes: '', account_id: '' });
+
+  // Week / Month / All time filter for the stats and charts
+  const { range, setRange, filteredTrades } = useRangeFilter(trades);
 
   const radarRef = useRef(null); const lineRef = useRef(null); const barRef = useRef(null);
   const radarChart = useRef(null); const lineChart = useRef(null); const barChart = useRef(null);
@@ -79,8 +83,9 @@ export default function Dashboard() {
     router.refresh();
   }
 
-  // ---- Derived stats, recomputed whenever trades change ----
-  const stats = (() => {
+  // ---- Derived stats, recomputed whenever the filtered trades change ----
+  // (the parameter below is named `trades` on purpose so the math inside stays the same)
+  const stats = ((trades) => {
     if (trades.length === 0) return null;
     const netPnl = trades.reduce((s, t) => s + Number(t.pnl), 0);
     const wins = trades.filter(t => t.pnl > 0);
@@ -132,7 +137,12 @@ export default function Dashboard() {
       edgeScore, radarVals: [winScore, pfScore, avgWLScore, recoveryScore, ddScore, consistency],
       startingTotal, byDay,
     };
-  })();
+  })(filteredTrades);
+
+  // The calendar always shows ALL trades, so you can browse any month
+  // no matter which range is selected for the stats.
+  const allByDay = {};
+  trades.forEach(t => { (allByDay[t.trade_date] = allByDay[t.trade_date] || []).push(t); });
 
   // ---- Charts ----
   useEffect(() => {
@@ -173,7 +183,7 @@ export default function Dashboard() {
     const y = calDate.getFullYear(), m = calDate.getMonth();
     const firstDow = new Date(y, m, 1).getDay();
     const daysInMonth = new Date(y, m + 1, 0).getDate();
-    const byDay = stats?.byDay || {};
+    const byDay = allByDay;
 
     const flat = [];
     for (let i = 0; i < firstDow; i++) flat.push(null);
@@ -249,11 +259,15 @@ export default function Dashboard() {
         <h1 style={{fontFamily:'var(--serif)', fontWeight:500, fontSize:28, marginBottom:4}}>
           Welcome back{user?.user_metadata?.name ? `, ${user.user_metadata.name}` : ''}
         </h1>
-        <p style={{color:'var(--text-dim)', marginBottom:24}}>{trades.length} trade{trades.length===1?'':'s'} on record</p>
+        <p style={{color:'var(--text-dim)', marginBottom:16}}>{filteredTrades.length} trade{filteredTrades.length===1?'':'s'} {rangeLabel(range)}</p>
+
+        <RangeToggle range={range} setRange={setRange} />
 
         {!stats && (
           <div className="panel" style={{textAlign:'center', color:'var(--text-muted)'}}>
-            No trades yet — log your first one below and every stat here will start calculating.
+            {trades.length === 0
+              ? 'No trades yet — log your first one below and every stat here will start calculating.'
+              : `No trades ${rangeLabel(range)} yet.`}
           </div>
         )}
 
