@@ -27,8 +27,8 @@ export default function Dashboard() {
   // Week / Month / All time filter for the stats and charts
   const { range, setRange, filteredTrades } = useRangeFilter(trades);
 
-  const radarRef = useRef(null); const lineRef = useRef(null); const barRef = useRef(null);
-  const radarChart = useRef(null); const lineChart = useRef(null); const barChart = useRef(null);
+  const radarRef = useRef(null); const lineRef = useRef(null);
+  const radarChart = useRef(null); const lineChart = useRef(null);
 
   useEffect(() => { init(); }, []);
 
@@ -151,7 +151,6 @@ export default function Dashboard() {
     if (loading || !stats) return;
     if (radarChart.current) radarChart.current.destroy();
     if (lineChart.current) lineChart.current.destroy();
-    if (barChart.current) barChart.current.destroy();
 
     radarChart.current = new Chart(radarRef.current, {
       type: 'radar',
@@ -167,12 +166,6 @@ export default function Dashboard() {
       data: { labels: stats.dayKeys.map(k => k.slice(5)), datasets: [{ data: stats.cumulative, borderColor: '#3ecf8e',
         backgroundColor: (c) => { const g = c.chart.ctx.createLinearGradient(0,0,0,200); g.addColorStop(0,'rgba(62,207,142,.35)'); g.addColorStop(1,'rgba(62,207,142,0)'); return g; },
         fill: true, tension: .35, pointRadius: 0, borderWidth: 2 }] },
-      options: { plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { grid: { color: '#1b212a' } } } }
-    });
-
-    barChart.current = new Chart(barRef.current, {
-      type: 'bar',
-      data: { labels: stats.dayKeys.map(k => k.slice(5)), datasets: [{ data: stats.dayTotals, backgroundColor: (c) => c.raw < 0 ? '#f2555a' : '#3ecf8e', borderRadius: 3 }] },
       options: { plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { grid: { color: '#1b212a' } } } }
     });
   }, [stats, loading]);
@@ -305,7 +298,6 @@ export default function Dashboard() {
                 <div className="edge-scale"><span>0</span><span>20</span><span>40</span><span>60</span><span>80</span><span>100</span></div>
               </div>
               <div className="panel"><div className="panel-title">Daily net cumulative P&amp;L</div><canvas ref={lineRef}></canvas></div>
-              <div className="panel"><div className="panel-title">Net daily P&amp;L</div><canvas ref={barRef}></canvas></div>
             </div>
           </>
         )}
