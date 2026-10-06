@@ -7,6 +7,49 @@ import Sidebar from '../../components/Sidebar';
 import RangeToggle, { useRangeFilter, rangeLabel } from '../../components/RangeFilter';
 import MonthInReview from '../../components/MonthInReview';
 
+
+// Cleaner dashboard look. Scoped to .dash-clean so other pages are untouched.
+const DASH_CSS = `
+.dash-clean { --dc-border: rgba(255,255,255,.07); --dc-dim: var(--text-dim, #6b7280); }
+
+.dash-clean .dash-toolbar { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:22px; }
+.dash-clean .dash-toolbar .toggle-row { margin-bottom:0 !important; }
+.dash-clean .toggle-btn { font-size:13px; font-weight:500; padding:8px 16px; border-radius:8px; letter-spacing:.01em; }
+.dash-clean .review-btn { margin-left:auto; color:var(--text-muted, #9aa1ad); }
+
+.dash-clean .stat-row { display:grid; grid-template-columns:repeat(auto-fit, minmax(190px, 1fr)); gap:12px; margin-bottom:12px; }
+.dash-clean .stat-card { border:1px solid var(--dc-border); border-radius:14px; padding:18px 20px; }
+.dash-clean .stat-label { font-size:11.5px; font-weight:500; letter-spacing:.07em; text-transform:uppercase; color:var(--dc-dim); margin-bottom:10px; }
+.dash-clean .stat-val { font-family:inherit; font-size:26px; font-weight:600; letter-spacing:-.02em; line-height:1.1; font-variant-numeric:tabular-nums; }
+.dash-clean .stat-val.green { color:var(--green, #6fcf97); }
+.dash-clean .stat-val.red { color:var(--red, #f2555a); }
+
+.dash-clean .streak-bar { display:flex; flex-wrap:wrap; padding:0; border:1px solid var(--dc-border); border-radius:14px; margin-bottom:12px; overflow:hidden; }
+.dash-clean .streak-item { flex:1 1 180px; padding:16px 20px; border-left:1px solid var(--dc-border); display:flex; flex-direction:column; gap:6px; }
+.dash-clean .streak-item:first-child { border-left:0; }
+.dash-clean .streak-label { font-size:11.5px; font-weight:500; letter-spacing:.07em; text-transform:uppercase; color:var(--dc-dim); }
+.dash-clean .streak-num { font-size:20px; font-weight:600; letter-spacing:-.01em; font-variant-numeric:tabular-nums; }
+
+.dash-clean .panel, .dash-clean .cal-panel { border:1px solid var(--dc-border); border-radius:14px; }
+.dash-clean .panel { padding:20px 22px; }
+.dash-clean .panel-title { font-family:inherit; font-size:11.5px; font-weight:500; letter-spacing:.07em; text-transform:uppercase; color:var(--dc-dim); margin-bottom:16px; }
+
+.dash-clean .edge-score-num { font-family:inherit; font-size:44px; font-weight:600; letter-spacing:-.03em; line-height:1; margin:18px 0 14px; font-variant-numeric:tabular-nums; }
+.dash-clean .edge-score-max { font-size:15px; font-weight:500; letter-spacing:0; color:var(--dc-dim); margin-left:6px; }
+.dash-clean .edge-slider-track { height:4px; border-radius:99px; }
+.dash-clean .edge-scale { font-family:inherit; font-size:11px; color:var(--dc-dim); font-variant-numeric:tabular-nums; }
+
+.dash-clean table { width:100%; border-collapse:collapse; }
+.dash-clean th { font-size:11px; font-weight:500; letter-spacing:.07em; text-transform:uppercase; color:var(--dc-dim); text-align:left; padding:0 10px 10px; border-bottom:1px solid var(--dc-border); }
+.dash-clean td { font-size:13.5px; padding:11px 10px; border-bottom:1px solid rgba(255,255,255,.04); font-variant-numeric:tabular-nums; }
+.dash-clean tr:last-child td { border-bottom:0; }
+.dash-clean th:first-child, .dash-clean td:first-child { padding-left:0; }
+.dash-clean th:last-child, .dash-clean td:last-child { padding-right:0; }
+
+.dash-clean .cal-head { font-size:14px; font-weight:500; }
+.dash-clean .cal-dow { font-size:10.5px; font-weight:500; letter-spacing:.07em; text-transform:uppercase; color:var(--dc-dim); }
+`;
+
 function fmt(n) {
   const sign = n < 0 ? '-' : '';
   return sign + '$' + Math.abs(n).toLocaleString(undefined, { maximumFractionDigits: 0 });
@@ -130,6 +173,36 @@ export default function Dashboard() {
     const stdDev = Math.sqrt(variance);
     const consistency = mean !== 0 ? Math.max(0, Math.min(100, 100 - (stdDev / Math.abs(mean)) * 25)) : 50;
 
+    // Which rules you break, and how each entry model performs.
+    // Old trades with "Followed plan? No" but no rule picked count as "Other".
+    const OTHER_RULE = 'Other (not in my rules)';
+    const brokenOf = (t) => {
+      if (Array.isArray(t.rules_broken) && t.rules_broken.length) return t.rules_broken;
+      return t.followed_plan === false ? [OTHER_RULE] : [];
+    };
+    const ruleMap = {};
+    realTrades.forEach(t => brokenOf(t).forEach(r => {
+      ruleMap[r] = ruleMap[r] || { name: r, count: 0, pnl: 0 };
+      ruleMap[r].count += 1;
+      ruleMap[r].pnl += Number(t.pnl) || 0;
+    }));
+    const ruleStats = Object.values(ruleMap).sort((a, b) => b.count - a.count || a.pnl - b.pnl);
+    const avgOf = (arr) => arr.length ? arr.reduce((s, t) => s + (Number(t.pnl) || 0), 0) / arr.length : null;
+    const keptAvg = avgOf(realTrades.filter(t => brokenOf(t).length === 0));
+    const brokeAvg = avgOf(realTrades.filter(t => brokenOf(t).length > 0));
+
+    const modelMap = {};
+    realTrades.forEach(t => {
+      const name = (t.setup || '').trim() || 'No model';
+      const m = (modelMap[name] = modelMap[name] || { name, count: 0, wins: 0, pnl: 0 });
+      m.count += 1;
+      if ((Number(t.pnl) || 0) > 0) m.wins += 1;
+      m.pnl += Number(t.pnl) || 0;
+    });
+    const modelStats = Object.values(modelMap)
+      .map(m => ({ ...m, winPct: Math.round((m.wins / m.count) * 100) }))
+      .sort((a, b) => b.pnl - a.pnl);
+
     const startingTotal = accounts.reduce((s, a) => s + Number(a.starting_balance || 0), 0) || 50000;
     const winScore = Math.min(100, winPct);
     const pfScore = profitFactor === Infinity ? 100 : Math.min(100, profitFactor * 25);
@@ -143,6 +216,7 @@ export default function Dashboard() {
       weekdayCount: weekdayKeys.length, adherence, dayKeys, dayTotals, cumulative,
       edgeScore, radarVals: [winScore, pfScore, avgWLScore, recoveryScore, ddScore, consistency],
       startingTotal, byDay,
+      ruleStats, keptAvg, brokeAvg, modelStats, planTradeCount: realTrades.length,
     };
   })(filteredTrades);
 
@@ -154,6 +228,9 @@ export default function Dashboard() {
   // ---- Charts ----
   useEffect(() => {
     if (loading || !stats) return;
+    Chart.defaults.font.family = getComputedStyle(document.body).fontFamily;
+    Chart.defaults.font.size = 11;
+    Chart.defaults.color = '#6b7280';
     if (radarChart.current) radarChart.current.destroy();
     if (lineChart.current) lineChart.current.destroy();
 
@@ -163,7 +240,7 @@ export default function Dashboard() {
         labels: ['Win %', 'Profit factor', 'Avg win/loss', 'Recovery', 'Max drawdown', 'Consistency'],
         datasets: [{ data: stats.radarVals, backgroundColor: 'rgba(255,255,255,.12)', borderColor: '#e8e8e8', pointBackgroundColor: '#ffffff', borderWidth: 2 }]
       },
-      options: { plugins: { legend: { display: false } }, scales: { r: { grid: { color: '#1b212a' }, angleLines: { color: '#1b212a' }, pointLabels: { color: '#8b93a3', font: { size: 10.5 } }, ticks: { display: false }, suggestedMin: 0, suggestedMax: 100 } } }
+      options: { plugins: { legend: { display: false } }, scales: { r: { grid: { color: 'rgba(255,255,255,.06)' }, angleLines: { color: 'rgba(255,255,255,.06)' }, pointLabels: { color: '#8b93a3', font: { size: 11 } }, ticks: { display: false }, suggestedMin: 0, suggestedMax: 100 } } }
     });
 
     lineChart.current = new Chart(lineRef.current, {
@@ -171,7 +248,7 @@ export default function Dashboard() {
       data: { labels: stats.dayKeys.map(k => k.slice(5)), datasets: [{ data: stats.cumulative, borderColor: '#3ecf8e',
         backgroundColor: (c) => { const g = c.chart.ctx.createLinearGradient(0,0,0,200); g.addColorStop(0,'rgba(62,207,142,.35)'); g.addColorStop(1,'rgba(62,207,142,0)'); return g; },
         fill: true, tension: .35, pointRadius: 0, borderWidth: 2 }] },
-      options: { plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { grid: { color: '#1b212a' } } } }
+      options: { plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { grid: { color: 'rgba(255,255,255,.06)' }, border: { display: false } } } }
     });
   }, [stats, loading]);
 
@@ -255,16 +332,17 @@ export default function Dashboard() {
     <div className="app-shell">
       <Sidebar />
       <div className="app-main">
-      <div className="content">
+      <div className="content dash-clean">
+        <style>{DASH_CSS}</style>
         <h1 style={{fontFamily:'var(--serif)', fontWeight:500, fontSize:28, marginBottom:4}}>
           Welcome back{user?.user_metadata?.name ? `, ${user.user_metadata.name}` : ''}
         </h1>
         <p style={{color:'var(--text-dim)', marginBottom:16}}>{filteredTrades.length} trade{filteredTrades.length===1?'':'s'} {rangeLabel(range)}</p>
 
-        <div style={{display:'flex', gap:12, alignItems:'flex-start', flexWrap:'wrap'}}>
+        <div className="dash-toolbar">
           <RangeToggle range={range} setRange={setRange} />
-          <button type="button" className="toggle-btn" onClick={()=>setShowReview(true)}>
-            ✨ {calDate.toLocaleDateString(undefined,{month:'long'})} in review
+          <button type="button" className="toggle-btn review-btn" onClick={()=>setShowReview(true)}>
+            {calDate.toLocaleDateString(undefined,{month:'long'})} in review →
           </button>
         </div>
 
@@ -287,28 +365,76 @@ export default function Dashboard() {
               <div className="stat-card"><div className="stat-label">Trade win %</div><div className="stat-val">{stats.winPct.toFixed(1)}%</div></div>
               <div className="stat-card"><div className="stat-label">Profit factor</div><div className="stat-val">{stats.profitFactor===Infinity?'∞':stats.profitFactor.toFixed(2)}</div></div>
               <div className="stat-card"><div className="stat-label">Day win %</div><div className="stat-val">{stats.dayWinPct.toFixed(1)}%</div></div>
-              <div className="stat-card"><div className="stat-label">Avg win/loss</div><div className="stat-val" style={{fontSize:16}}>{fmt(stats.avgWin)} / -{fmt(stats.avgLoss).replace('-','')}</div></div>
+              <div className="stat-card"><div className="stat-label">Avg win / loss</div><div className="stat-val" style={{fontSize:21}}><span style={{color:'var(--green, #6fcf97)'}}>{fmt(stats.avgWin)}</span><span style={{color:'var(--text-dim, #6b7280)', fontWeight:400, margin:'0 6px'}}>/</span><span style={{color:'var(--red, #f2555a)'}}>{stats.avgLoss > 0 ? '-' + fmt(stats.avgLoss).replace('-','') : '—'}</span></div></div>
             </div>
 
             <div className="streak-bar">
-              <span>🔥 <b>{stats.streak}</b> plan-followed streak &nbsp;·&nbsp; <b>{stats.weekdayCount}</b> weekdays accounted for &nbsp;·&nbsp; <b>{stats.adherence === null ? '—' : stats.adherence + '%'}</b> plan adherence</span>
+              <div className="streak-item"><span className="streak-label">Plan-followed streak</span><span className="streak-num">{stats.streak}</span></div>
+              <div className="streak-item"><span className="streak-label">Weekdays logged this week</span><span className="streak-num">{stats.weekdayCount}</span></div>
+              <div className="streak-item"><span className="streak-label">Plan adherence</span><span className="streak-num">{stats.adherence === null ? '—' : stats.adherence + '%'}</span></div>
             </div>
 
             <div className="panel-row">
               <div className="panel">
                 <div className="panel-title">Edge score</div>
                 <canvas ref={radarRef}></canvas>
-                <div className="edge-score-num">{stats.edgeScore.toFixed(1)}</div>
+                <div className="edge-score-num">{stats.edgeScore.toFixed(1)}<span className="edge-score-max">/ 100</span></div>
                 <div className="edge-slider-track"><div className="edge-slider-dot" style={{left: Math.min(100,Math.max(0,stats.edgeScore))+'%'}}></div></div>
                 <div className="edge-scale"><span>0</span><span>20</span><span>40</span><span>60</span><span>80</span><span>100</span></div>
               </div>
               <div className="panel"><div className="panel-title">Daily net cumulative P&amp;L</div><canvas ref={lineRef}></canvas></div>
             </div>
+
+            <div className="responsive-grid" style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:14, marginBottom:14}}>
+              <div className="panel">
+                <div className="panel-title">Rules you break most</div>
+                {stats.ruleStats.length === 0 ? (
+                  <div style={{color:'var(--text-dim)', fontSize:13.5, padding:'6px 0'}}>No broken rules in this range. Keep it up.</div>
+                ) : (
+                  <>
+                    {stats.ruleStats.map(r => (
+                      <div key={r.name} style={{display:'flex', justifyContent:'space-between', gap:12, padding:'9px 0', borderBottom:'1px solid var(--border)'}}>
+                        <div style={{fontSize:14}}>
+                          {r.name}
+                          <span style={{color:'var(--text-dim)', fontSize:12, marginLeft:8}}>{Math.round(r.count / stats.planTradeCount * 100)}% of trades</span>
+                        </div>
+                        <div style={{fontVariantNumeric:'tabular-nums', fontSize:12.5, whiteSpace:'nowrap', color: r.pnl>=0?'var(--green)':'var(--red)'}}>{r.count}× · {fmt(r.pnl)}</div>
+                      </div>
+                    ))}
+                    {stats.keptAvg !== null && stats.brokeAvg !== null && (
+                      <div style={{color:'var(--text-muted)', fontSize:12.5, marginTop:12, lineHeight:1.5}}>
+                        Average per trade when you followed your plan: <b>{fmt(stats.keptAvg)}</b>. When you broke a rule: <b>{fmt(stats.brokeAvg)}</b>.
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+
+              <div className="panel">
+                <div className="panel-title">Results by entry model</div>
+                <table>
+                  <thead><tr><th>Model</th><th style={{textAlign:'right'}}>Trades</th><th style={{textAlign:'right'}}>Win %</th><th style={{textAlign:'right'}}>Net P&amp;L</th></tr></thead>
+                  <tbody>
+                    {stats.modelStats.map(m => (
+                      <tr key={m.name}>
+                        <td>{m.name}</td>
+                        <td style={{textAlign:'right', fontVariantNumeric:'tabular-nums'}}>{m.count}</td>
+                        <td style={{textAlign:'right', fontVariantNumeric:'tabular-nums'}}>{m.winPct}%</td>
+                        <td style={{textAlign:'right', fontVariantNumeric:'tabular-nums', color: m.pnl>=0?'var(--green)':'var(--red)'}}>{fmt(m.pnl)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {stats.modelStats.length === 1 && stats.modelStats[0].name === 'No model' && (
+                  <div style={{color:'var(--text-dim)', fontSize:12.5, marginTop:10}}>Pick an entry model when you log a trade to see results by model here.</div>
+                )}
+              </div>
+            </div>
           </>
         )}
 
         <div className="panel">
-          <h3 style={{marginBottom:14, fontFamily:'var(--serif)'}}>Log a trade</h3>
+          <div className="panel-title">Log a trade</div>
           <form onSubmit={addTrade} className="responsive-grid" style={{display:'grid', gridTemplateColumns:'repeat(5,1fr) auto', gap:10, alignItems:'end'}}>
             <div className="field" style={{margin:0}}><label>Date</label><input type="date" value={form.date} onChange={e=>setForm({...form, date:e.target.value})} /></div>
             <div className="field" style={{margin:0}}><label>Symbol</label><input type="text" placeholder="MGC" value={form.symbol} onChange={e=>setForm({...form, symbol:e.target.value})} /></div>
@@ -325,7 +451,7 @@ export default function Dashboard() {
 
         <div className="responsive-grid" style={{display:'grid', gridTemplateColumns:'1.4fr 1fr', gap:14}}>
           <div className="panel">
-            <h3 style={{marginBottom:14, fontFamily:'var(--serif)'}}>Recent trades</h3>
+            <div className="panel-title">Recent trades</div>
             <table>
               <thead><tr><th>Date</th><th>Symbol</th><th style={{textAlign:'right'}}>Net P&amp;L</th><th></th></tr></thead>
               <tbody>
@@ -333,7 +459,7 @@ export default function Dashboard() {
                 {trades.slice(0,8).map(t => (
                   <tr key={t.id}>
                     <td>{t.trade_date}</td><td>{t.symbol}</td>
-                    <td style={{textAlign:'right', color: t.pnl>=0?'var(--green)':'var(--red)', fontFamily:'var(--mono)'}}>{t.pnl>=0?'':'-'}${Math.abs(t.pnl).toLocaleString()}</td>
+                    <td style={{textAlign:'right', color: t.pnl>=0?'var(--green)':'var(--red)', fontVariantNumeric:'tabular-nums'}}>{t.pnl>=0?'':'-'}${Math.abs(t.pnl).toLocaleString()}</td>
                     <td style={{textAlign:'right'}}><button className="del-btn" onClick={()=>deleteTrade(t.id)}>×</button></td>
                   </tr>
                 ))}
@@ -344,7 +470,7 @@ export default function Dashboard() {
           <div className="cal-panel">
             <div className="cal-head">
               <span><button className="del-btn" onClick={()=>shiftMonth(-1)}>‹</button> {calDate.toLocaleDateString(undefined,{month:'long', year:'numeric'})} <button className="del-btn" onClick={()=>shiftMonth(1)}>›</button></span>
-              <span style={{fontFamily:'var(--mono)', fontWeight:600, color: monthTotal>=0?'var(--green)':'var(--red)'}}>{fmt(monthTotal)}</span>
+              <span style={{fontVariantNumeric:'tabular-nums', fontWeight:600, color: monthTotal>=0?'var(--green)':'var(--red)'}}>{fmt(monthTotal)}</span>
             </div>
             <div className="cal-grid">
               {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d=><div key={d} className="cal-dow">{d}</div>)}
