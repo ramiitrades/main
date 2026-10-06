@@ -19,7 +19,11 @@ const CARD = '#0b0d10';
 const MONO = 'inherit'; // numbers and labels use the same clean font as the rest of the app
 const SERIF = 'inherit';
 
+// Privacy mode: when on, every dollar amount in the recap shows as $•••
+let MASK_MONEY = false;
+
 function money(n, { sign = false, decimals = 2 } = {}) {
+  if (MASK_MONEY) return '$•••';
   const abs = Math.abs(n).toLocaleString(undefined, {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
@@ -210,7 +214,7 @@ function EquityLine({ values, width = 300, height = 140, id = 'mirFill' }) {
   );
 }
 
-function TradeCard({ t, color }) {
+function TradeCard({ t, color, hidePhoto = false }) {
   const [imgOk, setImgOk] = useState(true);
   const why = (t.why_text || '').trim();
   const photo = Array.isArray(t.photo_urls) && t.photo_urls.length ? t.photo_urls[0] : null;
@@ -219,7 +223,10 @@ function TradeCard({ t, color }) {
       width: '100%', textAlign: 'left', border: `1px solid ${color}44`, background: `${color}0f`,
       borderRadius: 14, padding: 14, marginTop: 20,
     }}>
-      {photo && imgOk && (
+      {photo && hidePhoto && (
+        <div style={{ fontSize: 12, color: DIM, marginBottom: 12 }}>Screenshot hidden in privacy mode</div>
+      )}
+      {photo && imgOk && !hidePhoto && (
         <img
           src={photo} alt="Trade screenshot" onError={() => setImgOk(false)}
           style={{
@@ -425,8 +432,9 @@ async function shareOrDownload(canvas, r) {
 // ---------------------------------------------------------------
 const DURATIONS = { intro: 4000, net: 5500, shape: 6500, best: 7500, worst: 7500, how: 6500, breakdown: 15000 };
 
-export default function MonthInReview({ trades, monthDate, onClose, startAt = 0 }) {
-  const r = useMemo(() => buildReview(trades, monthDate), [trades, monthDate]);
+export default function MonthInReview({ trades, monthDate, onClose, startAt = 0, hideMoney = false }) {
+  MASK_MONEY = !!hideMoney;
+  const r = useMemo(() => buildReview(trades, monthDate), [trades, monthDate, hideMoney]);
   const slides = useMemo(
     () => (r.empty ? ['empty'] : ['intro', 'net', 'shape', 'best', 'worst', 'how', 'breakdown', 'share']),
     [r.empty]
@@ -521,7 +529,7 @@ export default function MonthInReview({ trades, monthDate, onClose, startAt = 0 
           <div style={{ fontFamily: MONO, fontSize: 42, fontWeight: 600, letterSpacing: '-.025em', color, marginTop: 22 }}>
             {money(Number(t.pnl), { sign: true })}
           </div>
-          <TradeCard t={t} color={color} />
+          <TradeCard t={t} color={color} hidePhoto={hideMoney} />
           {current === 'worst' && (
             <div style={{ fontSize: 12.5, color: DIM, marginTop: 16 }}>Every month has one. What matters is what it taught you.</div>
           )}
