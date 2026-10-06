@@ -8,6 +8,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 //   trades    - ALL of the user's trades (rows from your `trades` table)
 //   monthDate - any Date inside the month you want to review
 //   onClose   - called when the user closes the recap
+//   startAt   - (optional) slide number to start on, handy for testing
 // ---------------------------------------------------------------
 
 const GREEN = '#3ecf8e';
@@ -31,6 +32,12 @@ function prettyDate(key) {
   return new Date(key + 'T00:00:00').toLocaleDateString(undefined, {
     weekday: 'short', month: 'short', day: 'numeric',
   });
+}
+
+function shortDay(key) {
+  return new Date(key + 'T00:00:00')
+    .toLocaleDateString(undefined, { day: 'numeric', month: 'short' })
+    .toUpperCase();
 }
 
 function groupTotals(list, keyFn) {
@@ -64,6 +71,14 @@ export function buildReview(allTrades, monthDate) {
   const wins = list.filter((t) => pnlOf(t) > 0);
   const losses = list.filter((t) => pnlOf(t) < 0);
   const winRate = Math.round((wins.length / list.length) * 100);
+
+  // average reward-to-risk = average winner / average loser
+  const sumWins = wins.reduce((s, t) => s + pnlOf(t), 0);
+  const sumLosses = Math.abs(losses.reduce((s, t) => s + pnlOf(t), 0));
+  const avgWin = wins.length ? sumWins / wins.length : 0;
+  const avgLoss = losses.length ? sumLosses / losses.length : 0;
+  const avgRR = avgWin > 0 && avgLoss > 0 ? avgWin / avgLoss : null;
+  const rrText = avgRR ? `1:${avgRR.toFixed(1)}` : '—';
 
   // per-day totals + running equity
   const byDay = {};
@@ -136,7 +151,10 @@ export function buildReview(allTrades, monthDate) {
     empty: false, monthName, year: y, list, net, winRate,
     winCount: wins.length, lossCount: losses.length,
     tradeCount: list.length, dayCount: dayKeys.length,
+    avgRR, rrText,
     dayKeys, dayTotals, cumulative, bestIdx, worstIdx,
+    bestDayPnl: dayTotals[bestIdx], worstDayPnl: dayTotals[worstIdx],
+    firstDayLabel: shortDay(dayKeys[0]), lastDayLabel: shortDay(dayKeys[dayKeys.length - 1]),
     bestTrade, worstTrade, grades, topSetup, topSession, breakdown,
   };
 }
@@ -163,7 +181,7 @@ function Stat({ label, value, color }) {
   );
 }
 
-function EquityLine({ values, width = 300, height = 140 }) {
+function EquityLine({ values, width = 300, height = 140, id = 'mirFill' }) {
   if (!values.length) return null;
   const min = Math.min(0, ...values);
   const max = Math.max(0, ...values);
@@ -176,28 +194,40 @@ function EquityLine({ values, width = 300, height = 140 }) {
   const up = values[values.length - 1] >= 0;
   const color = up ? GREEN : RED;
   return (
-    <svg viewBox={`0 0 ${width} ${height}`} style={{ width: '100%', height: 'auto', overflow: 'visible' }}>
+    <svg viewBox={`0 0 ${width} ${height}`} style={{ width: '100%', height: 'auto', overflow: 'visible', display: 'block' }}>
       <defs>
-        <linearGradient id="mirFill" x1="0" y1="0" x2="0" y2="1">
+        <linearGradient id={id} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor={color} stopOpacity=".35" />
           <stop offset="100%" stopColor={color} stopOpacity="0" />
         </linearGradient>
       </defs>
-      {values.length > 1 && <polygon points={`0,${height} ${line} ${width},${height}`} fill="url(#mirFill)" />}
+      {values.length > 1 && <polygon points={`0,${height} ${line} ${width},${height}`} fill={`url(#${id})`} />}
       {values.length > 1
         ? <polyline points={line} fill="none" stroke={color} strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
         : <circle cx={pts[0][0]} cy={pts[0][1]} r="4" fill={color} />}
+      {values.length > 1 && <circle cx={pts[pts.length - 1][0]} cy={pts[pts.length - 1][1]} r="4" fill={color} />}
     </svg>
   );
 }
 
 function TradeCard({ t, color }) {
+  const [imgOk, setImgOk] = useState(true);
   const why = (t.why_text || '').trim();
+  const photo = Array.isArray(t.photo_urls) && t.photo_urls.length ? t.photo_urls[0] : null;
   return (
     <div style={{
       width: '100%', textAlign: 'left', border: `1px solid ${color}44`, background: `${color}0f`,
-      borderRadius: 14, padding: 16, marginTop: 22,
+      borderRadius: 14, padding: 14, marginTop: 20,
     }}>
+      {photo && imgOk && (
+        <img
+          src={photo} alt="Trade screenshot" onError={() => setImgOk(false)}
+          style={{
+            display: 'block', width: '100%', maxHeight: 210, objectFit: 'contain',
+            background: '#000', borderRadius: 10, border: '1px solid #232933', marginBottom: 12,
+          }}
+        />
+      )}
       <div style={{ fontFamily: MONO, fontSize: 11, color: DIM, marginBottom: 8 }}>{prettyDate(t.trade_date)}</div>
       <div style={{ fontSize: 20, fontWeight: 700, color: '#fff' }}>
         {t.symbol} <span style={{ fontSize: 12, fontWeight: 500, color: DIM }}>{(t.direction || '').toUpperCase()}</span>
@@ -216,78 +246,162 @@ function TradeCard({ t, color }) {
   );
 }
 
+// On-screen preview of the share card (the PNG below is drawn to match it)
+function ShareCardPreview({ r }) {
+  const up = r.net >= 0;
+  const miniBox = (label, t, color) => (
+    <div style={{ flex: 1, border: `1px solid ${color}44`, background: `${color}0f`, borderRadius: 12, padding: 10, textAlign: 'left' }}>
+      <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: 1.5, color: DIM }}>{label}</div>
+      <div style={{ fontFamily: MONO, fontSize: 17, fontWeight: 700, color, marginTop: 5 }}>{money(Number(t.pnl), { sign: true })}</div>
+      <div style={{ fontSize: 10.5, color: DIM, marginTop: 3 }}>{t.symbol} {(t.direction || '').toUpperCase()}</div>
+    </div>
+  );
+  return (
+    <div style={{ width: '100%', border: '1px solid #232933', borderRadius: 18, padding: 16, textAlign: 'left', background: '#0f1217' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ fontFamily: MONO, fontSize: 9.5, letterSpacing: 2, color: DIM }}>TRADER EDGE</div>
+        <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: 1.5, color: GREEN, border: `1px solid ${GREEN}55`, borderRadius: 99, padding: '3px 8px' }}>MONTHLY RECAP</div>
+      </div>
+      <div style={{ fontSize: 24, fontWeight: 600, color: '#e8e8e8', marginTop: 10 }}>
+        {r.monthName} <span style={{ color: '#5d6572', fontWeight: 400 }}>{r.year}</span>
+      </div>
+      <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: 1.5, color: DIM, marginTop: 8 }}>NET P&amp;L</div>
+      <div style={{ fontFamily: MONO, fontSize: 34, fontWeight: 700, color: up ? GREEN : RED, lineHeight: 1.1, marginTop: 2 }}>
+        {money(r.net, { sign: true })}
+      </div>
+      <div style={{ fontFamily: MONO, fontSize: 9.5, color: DIM, marginTop: 6 }}>
+        Best day {money(r.bestDayPnl, { sign: true, decimals: 0 })} · Worst day {money(r.worstDayPnl, { sign: true, decimals: 0 })}
+      </div>
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', border: '1px solid #232933', borderRadius: 12, padding: '10px 6px', marginTop: 14 }}>
+        {[[`${r.winRate}%`, 'WIN RATE'], [r.rrText, 'AVG R:R'], [r.tradeCount, 'TRADES'], [r.dayCount, 'DAYS']].map(([v, l]) => (
+          <div key={l} style={{ flex: 1, textAlign: 'center' }}>
+            <div style={{ fontFamily: MONO, fontSize: 16, fontWeight: 700, color: '#e8e8e8' }}>{v}</div>
+            <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: 1.2, color: DIM, marginTop: 3 }}>{l}</div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ border: '1px solid #232933', borderRadius: 12, padding: '10px 12px 8px', marginTop: 10 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: MONO, fontSize: 8.5, letterSpacing: 1.2, color: DIM, marginBottom: 6 }}>
+          <span>EQUITY CURVE</span>
+          <span style={{ color: up ? GREEN : RED }}>{money(r.net, { sign: true })}</span>
+        </div>
+        <EquityLine values={r.cumulative} height={80} id="mirFillShare" />
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: MONO, fontSize: 8.5, color: '#5d6572', marginTop: 4 }}>
+          <span>{r.firstDayLabel}</span><span>{r.lastDayLabel}</span>
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', gap: 10, marginTop: 10 }}>
+        {miniBox('BEST TRADE', r.bestTrade, GREEN)}
+        {miniBox('WORST TRADE', r.worstTrade, RED)}
+      </div>
+    </div>
+  );
+}
+
 // ---------------------------------------------------------------
 // Share image (drawn on a canvas so it works with no extra libraries)
 // ---------------------------------------------------------------
-function drawShareCard(canvas, r) {
+export function drawShareCard(canvas, r) {
   const W = 1080, H = 1350;
   canvas.width = W; canvas.height = H;
   const c = canvas.getContext('2d');
   const mono = 'ui-monospace, SFMono-Regular, Menlo, monospace';
   const sans = 'system-ui, -apple-system, Segoe UI, sans-serif';
   const up = r.net >= 0;
+  const accent = up ? GREEN : RED;
+
+  const rr = (x, y, w, h, rad) => {
+    c.beginPath();
+    if (c.roundRect) c.roundRect(x, y, w, h, rad); else c.rect(x, y, w, h);
+  };
+  const panel = (x, y, w, h, fill, stroke) => {
+    rr(x, y, w, h, 28); c.fillStyle = fill; c.fill();
+    c.lineWidth = 2; c.strokeStyle = stroke; c.stroke();
+  };
 
   c.fillStyle = CARD; c.fillRect(0, 0, W, H);
-
   c.textAlign = 'left';
-  c.fillStyle = '#e8e8e8'; c.font = `600 66px ${sans}`;
-  c.fillText(r.monthName, 80, 140);
-  const mw = c.measureText(r.monthName + ' ').width;
-  c.fillStyle = '#5d6572'; c.fillText(String(r.year), 80 + mw, 140);
 
-  c.fillStyle = DIM; c.font = `500 26px ${mono}`;
-  c.fillText('NET RESULT', 80, 230);
-  c.fillStyle = up ? GREEN : RED; c.font = `700 140px ${mono}`;
-  c.fillText(money(r.net, { sign: true }), 80, 360);
+  // header
+  c.fillStyle = DIM; c.font = `600 24px ${mono}`;
+  c.fillText('TRADER EDGE', 80, 100);
+  const tag = 'MONTHLY RECAP';
+  c.font = `600 20px ${mono}`;
+  const tw = c.measureText(tag).width;
+  rr(W - 80 - tw - 40, 70, tw + 40, 46, 23); c.fillStyle = GREEN + '14'; c.fill();
+  c.strokeStyle = GREEN + '66'; c.lineWidth = 2; c.stroke();
+  c.fillStyle = GREEN; c.fillText(tag, W - 80 - tw - 20, 101);
+
+  // title
+  c.fillStyle = '#e8e8e8'; c.font = `600 72px ${sans}`;
+  c.fillText(r.monthName, 80, 215);
+  const mw = c.measureText(r.monthName + ' ').width;
+  c.fillStyle = '#5d6572'; c.font = `400 72px ${sans}`;
+  c.fillText(String(r.year), 80 + mw, 215);
+
+  // net pnl
+  c.fillStyle = DIM; c.font = `500 24px ${mono}`;
+  c.fillText('NET P&L', 80, 285);
+  c.fillStyle = accent; c.font = `700 128px ${mono}`;
+  c.fillText(money(r.net, { sign: true }), 80, 410);
+  c.fillStyle = DIM; c.font = `500 24px ${mono}`;
+  c.fillText(`Best day ${money(r.bestDayPnl, { sign: true, decimals: 0 })}  ·  Worst day ${money(r.worstDayPnl, { sign: true, decimals: 0 })}`, 80, 460);
 
   // stats row
-  const stats = [
-    [`${r.winRate}%`, 'WIN RATE'], [String(r.winCount), 'WINS'],
-    [String(r.lossCount), 'LOSSES'], [String(r.tradeCount), 'TRADES'], [String(r.dayCount), 'DAYS'],
-  ];
+  panel(80, 500, 920, 130, '#0f1217', '#232933');
+  const stats = [[`${r.winRate}%`, 'WIN RATE'], [r.rrText, 'AVG R:R'], [String(r.tradeCount), 'TRADES'], [String(r.dayCount), 'DAYS']];
+  c.textAlign = 'center';
   stats.forEach(([v, l], i) => {
-    const x = 80 + i * 190;
-    c.fillStyle = '#e8e8e8'; c.font = `700 46px ${mono}`; c.fillText(v, x, 470);
-    c.fillStyle = DIM; c.font = `500 20px ${mono}`; c.fillText(l, x, 505);
+    const cx = 80 + 920 / 8 + i * (920 / 4);
+    c.fillStyle = '#e8e8e8'; c.font = `700 50px ${mono}`; c.fillText(v, cx, 570);
+    c.fillStyle = DIM; c.font = `500 18px ${mono}`; c.fillText(l, cx, 604);
   });
+  c.textAlign = 'left';
 
-  // equity curve
-  const x0 = 80, x1 = W - 80, y0 = 580, y1 = 900;
+  // equity curve panel
+  panel(80, 660, 920, 300, '#0f1217', '#232933');
+  c.fillStyle = DIM; c.font = `500 18px ${mono}`; c.fillText('EQUITY CURVE', 110, 705);
+  c.textAlign = 'right'; c.fillStyle = accent; c.fillText(money(r.net, { sign: true }), 970, 705); c.textAlign = 'left';
+
+  const x0 = 110, x1 = 970, y0 = 735, y1 = 905;
   const vals = r.cumulative;
   const min = Math.min(0, ...vals), max = Math.max(0, ...vals), span = max - min || 1;
   const pt = (v, i) => [
     vals.length === 1 ? (x0 + x1) / 2 : x0 + (i / (vals.length - 1)) * (x1 - x0),
     y1 - ((v - min) / span) * (y1 - y0),
   ];
-  const col = vals[vals.length - 1] >= 0 ? GREEN : RED;
   if (vals.length > 1) {
     const g = c.createLinearGradient(0, y0, 0, y1);
-    g.addColorStop(0, col + '55'); g.addColorStop(1, col + '00');
+    g.addColorStop(0, accent + '55'); g.addColorStop(1, accent + '00');
     c.beginPath();
     vals.forEach((v, i) => { const [x, y] = pt(v, i); i ? c.lineTo(x, y) : c.moveTo(x, y); });
     c.lineTo(x1, y1); c.lineTo(x0, y1); c.closePath(); c.fillStyle = g; c.fill();
     c.beginPath();
     vals.forEach((v, i) => { const [x, y] = pt(v, i); i ? c.lineTo(x, y) : c.moveTo(x, y); });
-    c.strokeStyle = col; c.lineWidth = 5; c.lineJoin = 'round'; c.stroke();
-  } else {
-    const [x, y] = pt(vals[0], 0);
-    c.beginPath(); c.arc(x, y, 9, 0, Math.PI * 2); c.fillStyle = col; c.fill();
+    c.strokeStyle = accent; c.lineWidth = 5; c.lineJoin = 'round'; c.stroke();
   }
+  const [ex, ey] = pt(vals[vals.length - 1], vals.length - 1);
+  c.beginPath(); c.arc(ex, ey, 9, 0, Math.PI * 2); c.fillStyle = accent; c.fill();
+  c.fillStyle = '#5d6572'; c.font = `500 18px ${mono}`;
+  c.fillText(r.firstDayLabel, 110, 940);
+  c.textAlign = 'right'; c.fillText(r.lastDayLabel, 970, 940); c.textAlign = 'left';
 
   // best / worst trade boxes
   const box = (x, label, t, color) => {
-    c.fillStyle = color + '14'; c.strokeStyle = color + '55'; c.lineWidth = 2;
-    c.beginPath(); c.roundRect(x, 960, 440, 190, 24); c.fill(); c.stroke();
-    c.fillStyle = DIM; c.font = `500 22px ${mono}`; c.fillText(label, x + 30, 1010);
-    c.fillStyle = color; c.font = `700 54px ${mono}`; c.fillText(money(Number(t.pnl), { sign: true }), x + 30, 1078);
+    panel(x, 990, 440, 210, color + '10', color + '55');
+    c.fillStyle = DIM; c.font = `500 20px ${mono}`; c.fillText(label, x + 30, 1040);
+    c.fillStyle = color; c.font = `700 58px ${mono}`; c.fillText(money(Number(t.pnl), { sign: true }), x + 30, 1112);
     c.fillStyle = '#aab0bc'; c.font = `500 24px ${sans}`;
-    c.fillText(`${t.symbol} ${(t.direction || '').toUpperCase()}`.trim(), x + 30, 1124);
+    c.fillText(`${t.symbol} ${(t.direction || '').toUpperCase()}`.trim(), x + 30, 1160);
   };
   box(80, 'BEST TRADE', r.bestTrade, GREEN);
   box(W - 80 - 440, 'WORST TRADE', r.worstTrade, RED);
 
-  c.fillStyle = '#5d6572'; c.font = `500 24px ${mono}`; c.textAlign = 'center';
-  c.fillText('TRADER EDGE', W / 2, 1260);
+  c.fillStyle = '#4b5361'; c.font = `500 22px ${mono}`; c.textAlign = 'center';
+  c.fillText('TRADED & JOURNALED WITH TRADER EDGE', W / 2, 1280);
 }
 
 async function shareOrDownload(canvas, r) {
@@ -308,15 +422,15 @@ async function shareOrDownload(canvas, r) {
 // ---------------------------------------------------------------
 // The recap itself
 // ---------------------------------------------------------------
-const DURATIONS = { intro: 4000, net: 5500, shape: 6500, best: 6500, worst: 6500, how: 6500, breakdown: 15000 };
+const DURATIONS = { intro: 4000, net: 5500, shape: 6500, best: 7500, worst: 7500, how: 6500, breakdown: 15000 };
 
-export default function MonthInReview({ trades, monthDate, onClose }) {
+export default function MonthInReview({ trades, monthDate, onClose, startAt = 0 }) {
   const r = useMemo(() => buildReview(trades, monthDate), [trades, monthDate]);
   const slides = useMemo(
     () => (r.empty ? ['empty'] : ['intro', 'net', 'shape', 'best', 'worst', 'how', 'breakdown', 'share']),
     [r.empty]
   );
-  const [i, setI] = useState(0);
+  const [i, setI] = useState(startAt);
   const canvasRef = useRef(null);
 
   const next = () => setI((x) => Math.min(slides.length - 1, x + 1));
@@ -403,12 +517,12 @@ export default function MonthInReview({ trades, monthDate, onClose }) {
       return (
         <>
           <Chip color={color}>{current === 'best' ? 'Best trade' : 'Worst trade'}</Chip>
-          <div style={{ fontFamily: MONO, fontSize: 40, fontWeight: 700, color, marginTop: 26 }}>
+          <div style={{ fontFamily: MONO, fontSize: 40, fontWeight: 700, color, marginTop: 22 }}>
             {money(Number(t.pnl), { sign: true })}
           </div>
           <TradeCard t={t} color={color} />
           {current === 'worst' && (
-            <div style={{ fontSize: 12.5, color: DIM, marginTop: 18 }}>Every month has one. What matters is what it taught you.</div>
+            <div style={{ fontSize: 12.5, color: DIM, marginTop: 16 }}>Every month has one. What matters is what it taught you.</div>
           )}
         </>
       );
@@ -464,32 +578,29 @@ export default function MonthInReview({ trades, monthDate, onClose }) {
         </>
       );
     }
-    // share
-    const up = r.net >= 0;
+    // share slide
     return (
       <>
         <Chip>Share your month</Chip>
-        <div style={{ width: '100%', border: '1px solid #232933', borderRadius: 16, padding: 18, marginTop: 22, textAlign: 'left', background: '#0f1217' }}>
-          <div style={{ fontSize: 18, fontWeight: 600, color: '#e8e8e8' }}>{r.monthName} <span style={{ color: '#5d6572' }}>{r.year}</span></div>
-          <div style={{ fontFamily: MONO, fontSize: 30, fontWeight: 700, color: up ? GREEN : RED, margin: '10px 0 6px' }}>{money(r.net, { sign: true })}</div>
-          <div style={{ fontFamily: MONO, fontSize: 11, color: DIM, marginBottom: 6 }}>
-            {r.winRate}% win · {r.tradeCount} trades · {r.dayCount} days
-          </div>
-          <EquityLine values={r.cumulative} height={90} />
+        <div style={{ width: '100%', marginTop: 18 }}><ShareCardPreview r={r} /></div>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginTop: 18 }}>
+          <button
+            type="button"
+            onClick={() => shareOrDownload(canvasRef.current, r)}
+            style={{
+              pointerEvents: 'auto', background: GREEN, color: '#04210f', border: 'none',
+              borderRadius: 12, padding: '12px 28px', fontWeight: 700, fontSize: 14, cursor: 'pointer',
+            }}
+          >↑ Share</button>
+          <button
+            type="button" onClick={onClose}
+            style={{ pointerEvents: 'auto', background: 'transparent', color: DIM, border: 'none', fontFamily: MONO, letterSpacing: 1.5, fontSize: 13, cursor: 'pointer', padding: '12px 14px' }}
+          >DONE</button>
+          <button
+            type="button" onClick={() => setI(0)}
+            style={{ pointerEvents: 'auto', background: 'transparent', color: '#5d6572', border: 'none', fontSize: 13, cursor: 'pointer', padding: '12px 6px' }}
+          >↺</button>
         </div>
-        <button
-          type="button"
-          onClick={() => shareOrDownload(canvasRef.current, r)}
-          style={{
-            pointerEvents: 'auto', marginTop: 22, background: GREEN, color: '#04210f', border: 'none',
-            borderRadius: 12, padding: '13px 26px', fontWeight: 700, fontSize: 14, cursor: 'pointer',
-          }}
-        >Share / save image</button>
-        <button
-          type="button"
-          onClick={() => setI(0)}
-          style={{ pointerEvents: 'auto', marginTop: 12, background: 'transparent', color: DIM, border: 'none', fontSize: 13, cursor: 'pointer' }}
-        >↺ Replay</button>
         <canvas ref={canvasRef} style={{ display: 'none' }} />
       </>
     );
@@ -540,7 +651,8 @@ export default function MonthInReview({ trades, monthDate, onClose }) {
           style={{
             position: 'absolute', inset: 0, zIndex: 2, pointerEvents: 'none',
             display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-            textAlign: 'center', padding: '56px 28px 40px', animation: 'mirIn .45s ease both',
+            textAlign: 'center', padding: '52px 24px 36px', animation: 'mirIn .45s ease both',
+            overflowY: 'auto',
           }}
         >
           {renderSlide()}
